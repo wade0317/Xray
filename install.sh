@@ -424,8 +424,17 @@ main() {
     mkdir -p $is_conf_dir
 
     load core.sh
-    # create a tcp config
-    #add reality
+    # create default config based on environment variables
+    # Default: reality protocol on port 443
+    # Environment variables: XRAY_DEFAULT_PROTOCOL, XRAY_DEFAULT_PORT
+    default_protocol=${XRAY_DEFAULT_PROTOCOL:-reality}
+    default_port=${XRAY_DEFAULT_PORT:-443}
+    
+    if [[ $default_protocol == "reality" ]]; then
+        add reality $default_port
+    else
+        add $default_protocol $default_port
+    fi
     # remove tmp dir and exit.
     exit_and_del_tmpdir ok
 }
