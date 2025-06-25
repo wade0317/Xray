@@ -425,7 +425,7 @@ main() {
 
     load core.sh
     # create a tcp config
-    add reality
+    #add reality
     # remove tmp dir and exit.
     exit_and_del_tmpdir ok
 }
