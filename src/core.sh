@@ -3,23 +3,23 @@
 protocol_list=(
     VMess-TCP
     VMess-mKCP
-    VMess-QUIC
-    VMess-H2-TLS
+    # VMess-QUIC
+    # VMess-H2-TLS
     VMess-WS-TLS
     VMess-gRPC-TLS
-    VLESS-H2-TLS
+    # VLESS-H2-TLS
     VLESS-WS-TLS
     VLESS-gRPC-TLS
-    VLESS-SplitHTTP-TLS
+    VLESS-XHTTP-TLS
     VLESS-REALITY
-    Trojan-H2-TLS
+    # Trojan-H2-TLS
     Trojan-WS-TLS
     Trojan-gRPC-TLS
     Shadowsocks
     # Dokodemo-Door
     VMess-TCP-dynamic-port
     VMess-mKCP-dynamic-port
-    VMess-QUIC-dynamic-port
+    # VMess-QUIC-dynamic-port
     Socks
 )
 ss_method_list=(
@@ -125,7 +125,7 @@ get_uuid() {
 }
 
 get_ip() {
-    [[ $ip || $is_no_auto_tls || $is_gen ]] && return
+    [[ $ip || $is_no_auto_tls || $is_gen || $is_dont_get_ip ]] && return
     export "$(_wget -4 -qO- https://one.one.one.one/cdn-cgi/trace | grep ip=)" &>/dev/null
     [[ ! $ip ]] && export "$(_wget -6 -qO- https://one.one.one.one/cdn-cgi/trace | grep ip=)" &>/dev/null
     [[ ! $ip ]] && {
@@ -168,7 +168,7 @@ show_list() {
 is_test() {
     case $1 in
     number)
-        echo $2 | egrep '^[1-9][0-9]?+$'
+        echo $2 | grep -E '^[1-9][0-9]?+$'
         ;;
     port)
         if [[ $(is_test number $2) ]]; then
@@ -179,13 +179,13 @@ is_test() {
         [[ $(is_port_used $2) && ! $is_cant_test_port ]] && echo ok
         ;;
     domain)
-        echo $2 | egrep -i '^\w(\w|\-|\.)?+\.\w+$'
+        echo $2 | grep -E -i '^\w(\w|\-|\.)?+\.\w+$'
         ;;
     path)
-        echo $2 | egrep -i '^\/\w(\w|\-|\/)?+\w$'
+        echo $2 | grep -E -i '^\/\w(\w|\-|\/)?+\w$'
         ;;
     uuid)
-        echo $2 | egrep -i '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+        echo $2 | grep -E -i '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
         ;;
     esac
 
@@ -520,7 +520,7 @@ change() {
     1)
         # new port
         is_new_port=$3
-        [[ $host && ! $is_caddy ]] && err "($is_config_file) 不支持更改端口, 因为没啥意义."
+        [[ $host && ! $is_caddy || $is_no_auto_tls ]] && err "($is_config_file) 不支持更改端口, 因为没啥意义."
         if [[ $is_new_port && ! $is_auto ]]; then
             [[ ! $(is_test port $is_new_port) ]] && err "请输入正确的端口, 可选(1-65535)"
             [[ $is_new_port != 443 && $(is_test port_used $is_new_port) ]] && err "无法使用 ($is_new_port) 端口"
@@ -727,6 +727,8 @@ change() {
 
 # delete config.
 del() {
+    # dont get ip
+    is_dont_get_ip=1
     [[ $is_conf_dir_empty ]] && return # not found any json file.
     # get a config file
     [[ ! $is_config_file ]] && get info $1
@@ -746,7 +748,7 @@ del() {
                 [[ ! $old_host ]] && return # no host exist or not set new host;
                 is_del_host=$old_host
             }
-            [[ $is_del_host && $host != $old_host ]] && {
+            [[ $is_del_host && $host != $old_host && -f $is_caddy_conf/$is_del_host.conf ]] && {
                 rm -rf $is_caddy_conf/$is_del_host.conf $is_caddy_conf/$is_del_host.conf.add
                 [[ ! $is_new_json ]] && manage restart caddy &
             }
@@ -756,6 +758,7 @@ del() {
         warn "当前配置目录为空! 因为你刚刚删除了最后一个配置文件."
         is_conf_dir_empty=1
     fi
+    unset is_dont_get_ip
     [[ $is_dont_auto_exit ]] && unset is_config_file
 }
 
@@ -875,14 +878,16 @@ add() {
     is_lower=${1,,}
     if [[ $is_lower ]]; then
         case $is_lower in
-        tcp | kcp | quic | tcpd | kcpd | quicd)
+        # tcp | kcp | quic | tcpd | kcpd | quicd)
+        tcp | kcp | tcpd | kcpd)
             is_new_protocol=VMess-$(sed 's/^K/mK/;s/D$/-dynamic-port/' <<<${is_lower^^})
             ;;
-        ws | h2 | grpc | vws | vh2 | vgrpc | tws | th2 | tgrpc)
+        # ws | h2 | grpc | vws | vh2 | vgrpc | tws | th2 | tgrpc)
+        ws | grpc | vws | vgrpc | tws | tgrpc)
             is_new_protocol=$(sed -E "s/^V/VLESS-/;s/^T/Trojan-/;/^(W|H|G)/{s/^/VMess-/};s/G/g/" <<<${is_lower^^})-TLS
             ;;
-        vsh | split | splithttp)
-            is_new_protocol=VLESS-SplitHTTP-TLS
+        xhttp)
+            is_new_protocol=VLESS-XHTTP-TLS
             ;;
         r | reality)
             is_new_protocol=VLESS-REALITY
@@ -901,7 +906,7 @@ add() {
         #     ;;
         *)
             for v in ${protocol_list[@]}; do
-                [[ $(egrep -i "^$is_lower$" <<<$v) ]] && is_new_protocol=$v && break
+                [[ $(grep -E -i "^$is_lower$" <<<$v) ]] && is_new_protocol=$v && break
             done
 
             [[ ! $is_new_protocol ]] && err "无法识别 ($1), 请使用: $is_core add [protocol] [args... | auto]"
@@ -981,10 +986,10 @@ add() {
             kcp_seed=
             [[ $(grep -i tcp <<<$is_new_protocol) ]] && header_type=
             ;;
-        h2 | ws | grpc | splithttp)
+        h2 | ws | grpc | xhttp)
             old_host=$host
             if [[ ! $is_use_tls ]]; then
-                host=
+                unset host is_no_auto_tls
             else
                 [[ $is_old_net == 'grpc' ]] && {
                     path=/$path
@@ -1050,7 +1055,7 @@ add() {
                 ask set_header_type
             }
             for v in ${is_tmp_list[@]}; do
-                [[ $(egrep -i "^${is_use_header_type}${is_use_method}$" <<<$v) ]] && is_tmp_use_type=$v && break
+                [[ $(grep -E -i "^${is_use_header_type}${is_use_method}$" <<<$v) ]] && is_tmp_use_type=$v && break
             done
             [[ ! ${is_tmp_use_type} ]] && {
                 warn "(${is_use_header_type}${is_use_method}) 不是一个可用的${is_tmp_use_name}."
@@ -1176,6 +1181,7 @@ get() {
         [[ ! $is_addr ]] && {
             get_ip
             is_addr=$ip
+            [[ $(grep ":" <<<$ip) ]] && is_addr="[$ip]"
         }
         ;;
     new)
@@ -1186,8 +1192,8 @@ get() {
     file)
         is_file_str=$2
         [[ ! $is_file_str ]] && is_file_str='.json$'
-        # is_all_json=("$(ls $is_conf_dir | egrep $is_file_str)")
-        readarray -t is_all_json <<<"$(ls $is_conf_dir | egrep -i "$is_file_str" | sed '/dynamic-port-.*-link/d' | head -233)" # limit max 233 lines for show.
+        # is_all_json=("$(ls $is_conf_dir | grep -E $is_file_str)")
+        readarray -t is_all_json <<<"$(ls $is_conf_dir | grep -E -i "$is_file_str" | sed '/dynamic-port-.*-link/d' | head -233)" # limit max 233 lines for show.
         [[ ! $is_all_json ]] && err "无法找到相关的配置文件: $2"
         [[ ${#is_all_json[@]} -eq 1 ]] && is_config_file=$is_all_json && is_auto_get_config=1
         [[ ! $is_config_file ]] && {
@@ -1201,10 +1207,10 @@ get() {
             is_json_str=$(cat $is_conf_dir/"$is_config_file")
             is_json_data_base=$(jq '.inbounds[0]|.protocol,.port,(.settings|(.clients[0]|.id,.password),.method,.password,.address,.port,.detour.to,(.accounts[0]|.user,.pass))' <<<$is_json_str)
             [[ $? != 0 ]] && err "无法读取此文件: $is_config_file"
-            is_json_data_more=$(jq '.inbounds[0]|.streamSettings|.network,.tcpSettings.header.type,(.kcpSettings|.seed,.header.type),.quicSettings.header.type,.wsSettings.path,.httpSettings.path,.grpcSettings.serviceName,.splithttpSettings.path' <<<$is_json_str)
-            is_json_data_host=$(jq '.inbounds[0]|.streamSettings|.grpc_host,.wsSettings.headers.Host,.httpSettings.host[0],.splithttpSettings.host' <<<$is_json_str)
+            is_json_data_more=$(jq '.inbounds[0]|.streamSettings|.network,.tcpSettings.header.type,(.kcpSettings|.seed,.header.type),.quicSettings.header.type,.wsSettings.path,.httpSettings.path,.grpcSettings.serviceName,.xhttpSettings.path' <<<$is_json_str)
+            is_json_data_host=$(jq '.inbounds[0]|.streamSettings|.grpc_host,.wsSettings.headers.Host,.httpSettings.host[0],.xhttpSettings.host' <<<$is_json_str)
             is_json_data_reality=$(jq '.inbounds[0]|.streamSettings|.security,(.realitySettings|.serverNames[0],.publicKey,.privateKey)' <<<$is_json_str)
-            is_up_var_set=(null is_protocol port uuid trojan_password ss_method ss_password door_addr door_port is_dynamic_port is_socks_user is_socks_pass net tcp_type kcp_seed kcp_type quic_type ws_path h2_path grpc_path split_path grpc_host ws_host h2_host split_host is_reality is_servername is_public_key is_private_key)
+            is_up_var_set=(null is_protocol port uuid trojan_password ss_method ss_password door_addr door_port is_dynamic_port is_socks_user is_socks_pass net tcp_type kcp_seed kcp_type quic_type ws_path h2_path grpc_path xhttp_path grpc_host ws_host h2_host xhttp_host is_reality is_servername is_public_key is_private_key)
             [[ $is_debug ]] && msg "\n------------- debug: $is_config_file -------------"
             i=0
             for v in $(sed 's/""/null/g;s/"//g' <<<"$is_json_data_base $is_json_data_more $is_json_data_host $is_json_data_reality"); do
@@ -1216,8 +1222,14 @@ get() {
                 [[ ${!v} == 'null' ]] && unset $v
             done
 
-            path="${ws_path}${h2_path}${grpc_path}${split_path}"
-            host="${ws_host}${h2_host}${grpc_host}${split_host}"
+            # splithttp
+            if [[ $net == 'splithttp' ]]; then
+                net=xhttp
+                xhttp_path=$(jq -r '.inbounds[0]|.streamSettings|.splithttpSettings.path' <<<$is_json_str)
+                xhttp_host=$(jq -r '.inbounds[0]|.streamSettings|.splithttpSettings.host' <<<$is_json_str)
+            fi
+            path="${ws_path}${h2_path}${grpc_path}${xhttp_path}"
+            host="${ws_host}${h2_host}${grpc_host}${xhttp_host}"
             header_type="${tcp_type}${kcp_type}${quic_type}"
             if [[ $is_reality == 'reality' ]]; then
                 net=reality
@@ -1232,7 +1244,10 @@ get() {
                 [[ $? != 0 ]] && err "无法读取动态端口文件: $is_dynamic_port"
             fi
             if [[ $is_caddy && $host && -f $is_caddy_conf/$host.conf ]]; then
-                is_tmp_https_port=$(egrep -o "$host:[1-9][0-9]?+" $is_caddy_conf/$host.conf | sed s/.*://)
+                is_tmp_https_port=$(grep -E -o "$host:[1-9][0-9]?+" $is_caddy_conf/$host.conf | sed s/.*://)
+            fi
+            if [[ $host && ! -f $is_caddy_conf/$host.conf ]]; then
+                is_no_auto_tls=1
             fi
             [[ $is_tmp_https_port ]] && is_https_port=$is_tmp_https_port
             [[ $is_client && $host ]] && port=$is_https_port
@@ -1295,7 +1310,7 @@ get() {
             is_protocol=socks
             [[ ! $is_socks_user ]] && is_socks_user=233boy
             [[ ! $is_socks_pass ]] && is_socks_pass=$uuid
-            json_str='settings:{auth:"password",accounts:[{user:"'$is_socks_user'",pass:"'$is_socks_pass'"}],udp:true}'
+            json_str='settings:{auth:"password",accounts:[{user:"'$is_socks_user'",pass:"'$is_socks_pass'"}],udp:true,ip:"0.0.0.0"}'
             ;;
         *)
             err "无法识别协议: $is_config_file"
@@ -1343,10 +1358,10 @@ get() {
             [[ ! $path ]] && path="/$uuid"
             is_stream='httpSettings:{path:"'$path'",host:["'$host'"]}'
             ;;
-        *split*)
-            net=splithttp
+        *xhttp*)
+            net=xhttp
             [[ ! $path ]] && path="/$uuid"
-            is_stream='splithttpSettings:{host:"'$host'",path:"'$path'"}'
+            is_stream='xhttpSettings:{host:"'$host'",path:"'$path'"}'
             ;;
         *)
             err "无法识别传输协议: $is_config_file"
@@ -1399,7 +1414,11 @@ get() {
         fi
         ;;
     ssss | ss2022)
-        openssl rand -base64 32
+        if [[ $(grep 128 <<<$ss_method) ]]; then
+            openssl rand -base64 16
+        else
+            openssl rand -base64 32
+        fi
         [[ $? != 0 ]] && err "无法生成 Shadowsocks 2022 密码, 请安装 openssl."
         ;;
     ping)
@@ -1494,7 +1513,7 @@ info() {
             is_can_change=(0 1 5 10 11)
             is_info_show=(0 1 2 3 15 8 16 17 18)
             is_info_str=($is_protocol $is_addr $port $uuid xtls-rprx-vision reality $is_servername "chrome" $is_public_key)
-            is_url="$is_protocol://$uuid@$ip:$port?encryption=none&security=reality&flow=xtls-rprx-vision&type=tcp&sni=$is_servername&pbk=$is_public_key&fp=chrome#233boy-$net-$is_addr"
+            is_url="$is_protocol://$uuid@$is_addr:$port?encryption=none&security=reality&flow=xtls-rprx-vision&type=tcp&sni=$is_servername&pbk=$is_public_key&fp=chrome#233boy-$net-$is_addr"
         fi
         ;;
     ss)
@@ -1503,7 +1522,7 @@ info() {
         is_url="ss://$(echo -n ${ss_method}:${ss_password} | base64 -w 0)@${is_addr}:${port}#233boy-$net-${is_addr}"
         is_info_str=($is_protocol $is_addr $port $ss_password $ss_method)
         ;;
-    ws | h2 | grpc | splithttp)
+    ws | h2 | grpc | xhttp)
         is_color=45
         is_can_change=(0 1 2 3 5)
         is_info_show=(0 1 2 3 4 6 7 8)
@@ -1831,8 +1850,9 @@ main() {
         get_ip
         msg $ip
         ;;
-    log | logerr)
-        get $@
+    log | logerr | errlog)
+        load log.sh
+        log_set $@
         ;;
     url | qr)
         url_qr $@
