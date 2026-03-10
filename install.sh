@@ -493,30 +493,27 @@ main() {
     echo "$(date +'%T')) 生成订阅文件..."
     gen_subscribe
 
-    # 验证并显示订阅信息
+    # 显示订阅信息
     if [[ $is_sub_token ]]; then
         [[ ! $ip ]] && get_ip
-        local _sub_out="$is_sub_dir/$is_sub_token"
         local _base="http://${ip}:${is_sub_port}/${is_sub_token}"
         echo
         echo -e "\e[96m╔══════════════════════════════════════════════╗\e[0m"
         echo -e "\e[96m║              订阅链接  Subscribe URL          ║\e[0m"
         echo -e "\e[96m╠══════════════════════════════════════════════╣\e[0m"
-        echo -e "\e[96m║\e[0m \e[93mMihomo (Clash)\e[0m"
-        echo -e "\e[96m║\e[0m \e[92m${_base}/clash.yaml\e[0m"
-        echo -e "\e[96m║\e[0m \e[93mSing-box\e[0m"
-        echo -e "\e[96m║\e[0m \e[92m${_base}/singbox.json\e[0m"
-        echo -e "\e[96m║\e[0m \e[93m通用订阅 (Base64)\e[0m"
-        echo -e "\e[96m║\e[0m \e[92m${_base}/base64.txt\e[0m"
-        echo -e "\e[96m╠══════════════════════════════════════════════╣\e[0m"
-        for _f in "clash.yaml:Mihomo" "singbox.json:Sing-box" "base64.txt:Base64"; do
-            local _name="${_f##*:}" _file="${_f%%:*}" _fp="$_sub_out/${_f%%:*}"
-            if [[ -f $_fp ]]; then
-                echo -e "\e[96m║\e[0m \e[32m✓\e[0m $_name  \e[90m($(wc -c <"$_fp") bytes)\e[0m"
-            else
-                echo -e "\e[96m║\e[0m \e[31m✗\e[0m $_name  \e[31m[缺失]\e[0m"
-            fi
-        done
+        echo -e "\e[96m║\e[0m"
+        echo -e "\e[96m║\e[0m \e[93mClash (Mihomo) 订阅地址 - 推荐\e[0m"
+        echo -e "\e[96m║\e[0m"
+        echo -e "\e[96m║\e[0m   \e[92m${_base}/clash.yaml\e[0m"
+        echo -e "\e[96m║\e[0m"
+        echo -e "\e[96m║\e[0m \e[93mSing-box 订阅地址\e[0m"
+        echo -e "\e[96m║\e[0m"
+        echo -e "\e[96m║\e[0m   \e[92m${_base}/singbox.json\e[0m"
+        echo -e "\e[96m║\e[0m"
+        echo -e "\e[96m║\e[0m \e[93mV2ray/NekoBox 通用订阅地址 (Base64)\e[0m"
+        echo -e "\e[96m║\e[0m"
+        echo -e "\e[96m║\e[0m   \e[92m${_base}/base64.txt\e[0m"
+        echo -e "\e[96m║\e[0m"
         echo -e "\e[96m╚══════════════════════════════════════════════╝\e[0m"
         echo
     fi

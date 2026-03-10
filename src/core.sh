@@ -1862,6 +1862,8 @@ main() {
         ;;
     i | info)
         info $2
+        load subscribe.sh
+        show_sub_link
         ;;
     ip)
         get_ip
