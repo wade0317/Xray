@@ -2,21 +2,17 @@
     "dns": {
         "servers": [
             {
-                "type": "tls",
                 "tag": "google",
-                "server": "8.8.8.8",
+                "address": "tls://8.8.8.8",
                 "detour": "proxy"
             },
             {
-                "type": "https",
                 "tag": "local",
-                "server": "223.5.5.5"
+                "address": "https://223.5.5.5/dns-query"
             },
             {
-                "type": "fakeip",
                 "tag": "fake-ip",
-                "inet4_range": "198.18.0.0/15",
-                "inet6_range": "fc00::/18"
+                "address": "fakeip"
             }
         ],
         "rules": [
@@ -144,7 +140,6 @@
         }
     ],
     "route": {
-        "default_domain_resolver": "local",
         "rule_set": [
             {
                 "type": "remote",
