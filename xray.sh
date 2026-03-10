@@ -1,6 +1,6 @@
 #!/bin/bash
 
 args=$@
-is_sh_ver=v1.0.4
+is_sh_ver=v1.0.5
 
 . /etc/xray/sh/src/init.sh
