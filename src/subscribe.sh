@@ -45,8 +45,9 @@ show_sub_link() {
         done
     fi
 
-    # 始终显示 IP:端口链接
-    local base_ip="http://${is_addr}:${is_sub_port}/${is_sub_token}"
+    # 始终显示 IP:端口链接（强制使用真实 IP，避免 is_addr 被域名覆盖）
+    get_ip
+    local base_ip="http://${ip}:${is_sub_port}/${is_sub_token}"
     [[ $has_domain -eq 1 ]] && msg "---"
     msg ""
     msg "Clash (Mihomo) 订阅地址 - 推荐:"
