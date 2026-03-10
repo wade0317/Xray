@@ -98,15 +98,40 @@ xray sub
 
 每次添加或删除节点后，脚本自动重新生成以下三种订阅文件：
 
-| 类型 | URL | 适用客户端 |
-|------|-----|----------|
-| 通用 Base64 | `http://ip:2096/{token}/base64.txt` | v2rayN、NekoBox 等 |
-| Sing-box | `http://ip:2096/{token}/singbox.json` | Sing-box |
-| Mihomo | `http://ip:2096/{token}/clash.yaml` | Clash Verge、Mihomo |
+| 类型 | 适用客户端 |
+|------|----------|
+| Clash (Mihomo) 订阅地址 - 推荐 | Clash Verge Rev、Mihomo |
+| Sing-box 订阅地址 | Sing-box、Sing-box VT |
+| V2ray/NekoBox 通用订阅地址 (Base64) | v2rayN、NekoBox 等 |
+
+**IP 直连订阅（默认，无需域名）：**
+
+```
+http://{ip}:2096/{token}/clash.yaml
+http://{ip}:2096/{token}/singbox.json
+http://{ip}:2096/{token}/base64.txt
+```
+
+**HTTPS 域名订阅（配置域名后自动启用）：**
+
+```
+https://{domain}/sub/{token}/clash.yaml
+https://{domain}/sub/{token}/singbox.json
+https://{domain}/sub/{token}/base64.txt
+```
 
 使用 `xray sub` 随时查看当前订阅链接。
 
 > 订阅端口默认为 **2096**，Token 在安装时随机生成，存储于 `/etc/xray/subscribe/token`。
+> 配置域名后会同时提供 HTTPS 域名链接和 IP 直连备用链接。
+
+### 推荐客户端
+
+| 客户端 | 平台 | 订阅格式 | 下载 |
+|--------|------|----------|------|
+| [Clash Verge Rev](https://github.com/clash-verge-rev/clash-verge-rev) | Windows / macOS / Linux | Mihomo (clash.yaml) | [GitHub Releases](https://github.com/clash-verge-rev/clash-verge-rev/releases) |
+| [Sing-box](https://github.com/SagerNet/sing-box) | iOS / Android / 桌面 | Sing-box (singbox.json) | [GitHub Releases](https://github.com/SagerNet/sing-box/releases) |
+| Sing-box VT | iOS | Sing-box (singbox.json) | [App Store](https://apps.apple.com/us/app/sing-box-vt/id6673731168) |
 
 ### 订阅模板
 

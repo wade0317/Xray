@@ -9,6 +9,16 @@ ipv6: false
 external-controller: 127.0.0.1:9090
 secret: ""
 
+# ---- TUN 模式（接管所有 TCP/UDP，包括 SSH）----
+# 开启后 SSH / git clone / 原始 TCP 均走代理规则，无需手动配置
+tun:
+  enable: true
+  stack: mixed          # mixed = gvisor(UDP) + system(TCP)，兼容性最好
+  auto-route: true      # 自动添加路由表
+  auto-detect-interface: true
+  dns-hijack:
+    - any:53            # 劫持所有 DNS 查询，防止 DNS 泄露
+
 # ---- DNS 防泄露配置 ----
 # 核心思路：
 #   - fake-ip 模式避免 DNS 查询暴露真实请求

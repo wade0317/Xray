@@ -15,6 +15,7 @@ show_sub_link() {
     [[ ! $is_sub_token ]] && return
     [[ ! $is_addr ]] && get addr
 
+    msg ""
     msg "------------- 订阅链接 -------------"
 
     # 有域名：显示 HTTPS 域名链接（遍历所有已配置域名）
@@ -25,26 +26,39 @@ show_sub_link() {
             local domain
             domain=$(basename "$conf" .conf)
             local base="https://${domain}:${is_https_port}/sub/${is_sub_token}"
-            msg "[HTTPS] Mihomo (Clash):"
-            msg "${base}/clash.yaml"
-            msg "[HTTPS] Sing-box:"
-            msg "${base}/singbox.json"
-            msg "[HTTPS] 通用订阅 (Base64):"
-            msg "${base}/base64.txt"
+            msg ""
+            msg "Clash (Mihomo) 订阅地址 - 推荐:"
+            msg ""
+            msg "  ${base}/clash.yaml"
+            msg ""
+            msg "Sing-box 订阅地址:"
+            msg ""
+            msg "  ${base}/singbox.json"
+            msg ""
+            msg "V2ray/NekoBox 通用订阅地址 (Base64):"
+            msg ""
+            msg "  ${base}/base64.txt"
             has_domain=1
             break
         done
     fi
 
-    # 始终显示 IP:端口 备用链接
+    # 始终显示 IP:端口链接
     local base_ip="http://${is_addr}:${is_sub_port}/${is_sub_token}"
     [[ $has_domain -eq 1 ]] && msg "---"
-    msg "[备用] Mihomo (Clash):"
-    msg "${base_ip}/clash.yaml"
-    msg "[备用] Sing-box:"
-    msg "${base_ip}/singbox.json"
-    msg "[备用] 通用订阅 (Base64):"
-    msg "${base_ip}/base64.txt"
+    msg ""
+    msg "Clash (Mihomo) 订阅地址 - 推荐:"
+    msg ""
+    msg "  ${base_ip}/clash.yaml"
+    msg ""
+    msg "Sing-box 订阅地址:"
+    msg ""
+    msg "  ${base_ip}/singbox.json"
+    msg ""
+    msg "V2ray/NekoBox 通用订阅地址 (Base64):"
+    msg ""
+    msg "  ${base_ip}/base64.txt"
+    msg ""
 
     msg "------------------------------------"
 }
@@ -376,7 +390,7 @@ gen_subscribe() {
         local mp
         mp=$(_sub_mihomo_proxy "$tag")
         [[ $mp ]] && {
-            mh_proxies+="${mp}"
+            mh_proxies+="${mp}"$'\n'
             mh_names+="      - \"${tag}\"\n"
         }
     done
