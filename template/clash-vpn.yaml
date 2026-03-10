@@ -1,0 +1,150 @@
+# Mihomo / Clash.Meta 基础配置模板
+# 重点：防 DNS 泄露 + 结构清晰 + 兼容性好
+
+mixed-port: 7890
+allow-lan: false
+mode: rule
+log-level: info
+ipv6: false
+external-controller: 127.0.0.1:9090
+secret: ""
+
+# ---- DNS 防泄露配置 ----
+# 核心思路：
+#   - fake-ip 模式避免 DNS 查询暴露真实请求
+#   - 国内域名 → 国内 DNS 直连解析
+#   - 代理服务器域名 → 国内 DNS 解析（避免走代理时循环）
+#   - 其他域名 → 使用 nameserver（国内 DNS），由规则决定是否走代理
+dns:
+  enable: true
+  ipv6: false
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    - "*.lan"
+    - "*.local"
+    - "*.localhost"
+    - localhost.ptlogin2.qq.com
+  # 默认 DNS（用于国内域名直连解析）
+  nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  # 代理服务器域名解析（防止循环，走直连解析）
+  proxy-server-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  # 国内域名走国内 DNS，其余走 nameserver（防 DNS 泄露关键）
+  nameserver-policy:
+    "geosite:cn,private":
+      - 223.5.5.5
+      - 119.29.29.29
+
+# ---- 代理节点（由脚本动态注入，以下为占位示例）----
+proxies:
+  - name: "vless-reality-2"
+    type: vless
+    server: 67.216.204.177
+    port: 48559
+    uuid: 3f4f223e-782f-4684-a326-8ef6c422f46f
+    flow: xtls-rprx-vision
+    tls: true
+    reality-opts:
+      public-key: ofqKxV6TIOEbs5SVb6EOjXiOhj_sEdsqYB55Y5rotm4
+      short-id: ""
+    client-fingerprint: chrome
+    servername: www.ebay.com
+    network: tcp
+
+  - name: "vless-ws-cf"
+    type: vless
+    server: mynet.fancymyth.com
+    port: 443
+    uuid: 21b79e08-b966-44de-9bd3-09a2d28b067c
+    tls: true
+    servername: mynet.fancymyth.com
+    network: ws
+    ws-opts:
+      path: /21b79e08-b966-44de-9bd3-09a2d28b067c
+      headers:
+        Host: mynet.fancymyth.com
+
+  - name: "ss-out-2"
+    type: ss
+    server: 67.216.204.177
+    port: 23456
+    cipher: aes-256-gcm
+    password: dfaweGwe
+
+# ---- 代理组 ----
+proxy-groups:
+  - name: "proxy"
+    type: select
+    proxies:
+      - "auto"
+      - "vless-reality-2"
+      - "vless-ws-cf"
+      - "ss-out-2"
+      - DIRECT
+
+  - name: "auto"
+    type: url-test
+    proxies:
+      - "vless-reality-2"
+      - "vless-ws-cf"
+      - "ss-out-2"
+    url: "http://cp.cloudflare.com/"
+    interval: 300
+    tolerance: 50
+
+# ---- 规则集 ----
+rule-providers:
+  geosite-cn:
+    type: http
+    behavior: domain
+    format: yaml
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/direct.txt"
+    interval: 86400
+    path: ./ruleset/geosite-cn.yaml
+
+  geoip-cn:
+    type: http
+    behavior: ipcidr
+    format: yaml
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/cncidr.txt"
+    interval: 86400
+    path: ./ruleset/geoip-cn.yaml
+
+  private:
+    type: http
+    behavior: domain
+    format: yaml
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt"
+    interval: 86400
+    path: ./ruleset/private.yaml
+
+# ---- 路由规则 ----
+rules:
+  # 私有地址直连
+  - RULE-SET,private,DIRECT
+
+  # github 走代理
+  - DOMAIN-SUFFIX,github.com,proxy
+  - DOMAIN-SUFFIX,githubusercontent.com,proxy
+
+  # gitee 直连
+  - DOMAIN-SUFFIX,gitee.com,DIRECT
+
+  # 国内域名直连
+  - RULE-SET,geosite-cn,DIRECT
+
+  # 国内 IP 直连
+  - RULE-SET,geoip-cn,DIRECT,no-resolve
+
+  # 私有 IP 直连
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+
+  # 其余走代理
+  - MATCH,proxy
