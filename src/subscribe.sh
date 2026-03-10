@@ -25,7 +25,9 @@ show_sub_link() {
             [[ -f $conf ]] || continue
             local domain
             domain=$(basename "$conf" .conf)
-            local base="https://${domain}:${is_https_port}/sub/${is_sub_token}"
+            local port_suffix=""
+            [[ "$is_https_port" != "443" ]] && port_suffix=":${is_https_port}"
+            local base="https://${domain}${port_suffix}/sub/${is_sub_token}"
             msg ""
             msg "Clash (Mihomo) 订阅地址 - 推荐:"
             msg ""
