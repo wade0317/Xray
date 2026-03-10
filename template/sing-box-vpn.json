@@ -34,15 +34,21 @@
                 "server": "fake-ip"
             },
             {
-                "domain_suffix": [".cn"],
+                "domain_suffix": [
+                    ".cn"
+                ],
                 "server": "local"
             },
             {
                 "rule_set": "geosite-geolocation-cn",
                 "server": "local"
+            },
+            {
+                "rule_set": "geosite-geolocation-!cn",
+                "server": "fake-ip"
             }
         ],
-        "final": "fake-ip",
+        "final": "google",
         "fakeip": {
             "enabled": true,
             "inet4_range": "198.18.0.0/15",
@@ -177,7 +183,9 @@
         ],
         "rules": [
             {
-                "protocol": ["dns"],
+                "protocol": [
+                    "dns"
+                ],
                 "action": "hijack-dns"
             },
             {
@@ -189,7 +197,9 @@
                 "outbound": "proxy"
             },
             {
-                "domain_suffix": ["github.com"],
+                "domain_suffix": [
+                    "github.com"
+                ],
                 "action": "route",
                 "outbound": "proxy"
             },
@@ -218,7 +228,9 @@
                 "action": "direct"
             },
             {
-                "rule_set": ["geoip-cn"],
+                "rule_set": [
+                    "geoip-cn"
+                ],
                 "action": "direct"
             },
             {
