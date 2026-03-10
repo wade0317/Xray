@@ -45,7 +45,12 @@
         "final": "google",
         "strategy": "prefer_ipv4",
         "independent_cache": true,
-        "cache_capacity": 1024
+        "cache_capacity": 1024,
+        "fakeip": {
+            "enabled": true,
+            "inet4_range": "198.18.0.0/15",
+            "inet6_range": "fc00::/18"
+        }
     },
     "inbounds": [
         {
