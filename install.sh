@@ -1,6 +1,7 @@
 #!/bin/bash
 
 author=wade0317
+is_sh_ver=v1.0.8
 # github=https://github.com/wade0317/xray
 
 # bash fonts colors
@@ -330,7 +331,7 @@ main() {
     # show welcome msg
     clear
     echo
-    echo "........... $is_core_name script .........."
+    echo "........... $is_core_name script $is_sh_ver .........."
     echo
 
     # start installing...
