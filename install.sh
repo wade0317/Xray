@@ -1,7 +1,7 @@
 #!/bin/bash
 
 author=wade0317
-is_sh_ver=v1.1.1
+is_sh_ver=v1.1.2
 # github=https://github.com/wade0317/xray
 
 # bash fonts colors
