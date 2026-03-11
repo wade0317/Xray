@@ -881,6 +881,8 @@ api() {
 
 # add a config
 add() {
+    # 清空上次 add 调用残留的变量，防止多次连续调用时配置污染
+    unset json_str is_stream is_protocol is_reality is_servername is_public_key is_private_key
     is_lower=${1,,}
     if [[ $is_lower ]]; then
         case $is_lower in
