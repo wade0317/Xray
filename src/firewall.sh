@@ -1,12 +1,49 @@
 #!/bin/bash
 
-# 检测当前活跃的防火墙类型
-# 返回: ufw / firewalld / 空（无活跃防火墙）
+# 初始化防火墙：确保 ufw 与 firewalld 二选一，优先 firewalld
+# 规则：
+#   - firewalld 已安装 + ufw 也安装 → 关闭 ufw，启用 firewalld
+#   - 只有 firewalld 安装            → 确保 firewalld 已启用
+#   - 只有 ufw 安装                  → 保持 ufw 现状（不强制启用，避免锁出）
+#   - 都没有安装                     → 安装并启用 firewalld
+fw_init() {
+    local has_firewalld has_ufw
+    command -v firewall-cmd &>/dev/null && has_firewalld=1
+    command -v ufw &>/dev/null && has_ufw=1
+
+    if [[ $has_firewalld && $has_ufw ]]; then
+        # 两个都安装：关闭 ufw，使用 firewalld
+        if ufw status 2>/dev/null | grep -q "Status: active"; then
+            ufw disable &>/dev/null
+            _yellow "检测到 ufw 和 firewalld 同时安装，已关闭 ufw，优先使用 firewalld"
+        fi
+        systemctl enable --now firewalld &>/dev/null
+    elif [[ $has_firewalld ]]; then
+        systemctl enable --now firewalld &>/dev/null
+    elif [[ $has_ufw ]]; then
+        # 只有 ufw，不强制启用（避免规则未配置时锁出 SSH）
+        :
+    else
+        # 都没有安装：安装 firewalld
+        _yellow "未检测到防火墙，正在安装 firewalld..."
+        if command -v apt-get &>/dev/null; then
+            apt-get install -y firewalld &>/dev/null
+        elif command -v yum &>/dev/null; then
+            yum install -y firewalld &>/dev/null
+        fi
+        systemctl enable --now firewalld &>/dev/null
+        _green "firewalld 安装完成并已启用"
+    fi
+}
+
+# 检测当前应使用的防火墙类型
+# 优先级：firewalld（已安装即优先）> ufw（需已激活）
+# 返回: firewalld / ufw / 空（无可用防火墙）
 _fw_type() {
-    if ufw status 2>/dev/null | grep -q "Status: active"; then
-        echo "ufw"
-    elif systemctl is-active firewalld &>/dev/null; then
+    if command -v firewall-cmd &>/dev/null; then
         echo "firewalld"
+    elif ufw status 2>/dev/null | grep -q "Status: active"; then
+        echo "ufw"
     fi
 }
 

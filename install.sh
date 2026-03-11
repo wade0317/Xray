@@ -520,8 +520,9 @@ main() {
         echo -e "\e[96m╚══════════════════════════════════════════════╝\e[0m"
         echo
     fi
-    # 开放防火墙端口：Xray 主服务端口已在 add 中处理，这里只需开放订阅端口
+    # 初始化防火墙（确保 ufw/firewalld 二选一），再开放订阅端口
     load firewall.sh
+    fw_init
     fw_allow_sub_port
 
     # remove tmp dir and exit.
