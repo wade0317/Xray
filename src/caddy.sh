@@ -84,7 +84,7 @@ subscribe_caddy_config() {
 
     # 始终保留独立端口（无域名 / 直接 IP 访问的备用方案）
     cat >$is_sub_caddy_conf <<-EOF
-:${is_sub_port} {
+http://:${is_sub_port} {
     root * ${is_sub_dir}
     file_server
     header Access-Control-Allow-Origin "*"

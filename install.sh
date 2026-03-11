@@ -37,7 +37,9 @@ _mkdir() {
 }
 
 # root
-[[ $EUID != 0 ]] && err "当前非 ${yellow}ROOT用户.${none}"
+if [[ $EUID != 0 ]]; then
+    err "当前非 ROOT 用户，请先执行 ${yellow}sudo -i${none} 切换到 root 后再运行安装脚本。"
+fi
 
 # yum or apt-get, ubuntu/debian/centos
 cmd=$(type -P apt-get || type -P yum)
