@@ -1,38 +1,63 @@
 #!/bin/bash
 
-# 初始化防火墙：始终使用 firewalld，关闭 ufw（如已启用）
-# - 未安装 firewalld → 自动安装
-# - ufw 已启用       → 关闭 ufw，避免 iptables 规则冲突
+# 初始化防火墙：Debian/Ubuntu 使用 ufw，RHEL/CentOS 使用 firewalld
+# 返回 0 成功，1 失败
 fw_init() {
-    # 安装 firewalld（如未安装）
-    if ! command -v firewall-cmd &>/dev/null; then
-        _yellow "正在安装 firewalld..."
-        if command -v apt-get &>/dev/null; then
-            apt-get install -y firewalld &>/dev/null
-        elif command -v yum &>/dev/null; then
-            yum install -y firewalld &>/dev/null
+    if command -v apt-get &>/dev/null; then
+        # Debian/Ubuntu：使用 ufw
+        if ! command -v ufw &>/dev/null; then
+            _yellow "正在安装 ufw..."
+            apt-get install -y ufw &>/dev/null
+            if ! command -v ufw &>/dev/null; then
+                _red "ufw 安装失败，请手动执行: apt install -y ufw，然后重新运行安装脚本"
+                return 1
+            fi
+            _green "ufw 安装完成"
         fi
-        _green "firewalld 安装完成"
+        # 若 ufw 未激活则启用（先放行 SSH 防止断连）
+        if ! ufw status 2>/dev/null | grep -q "Status: active"; then
+            ufw allow 22/tcp &>/dev/null
+            ufw --force enable &>/dev/null
+        fi
+        if ! ufw status 2>/dev/null | grep -q "Status: active"; then
+            _red "ufw 启用失败，请手动执行: ufw allow 22/tcp && ufw --force enable，然后重新运行安装脚本"
+            return 1
+        fi
+    elif command -v yum &>/dev/null || command -v dnf &>/dev/null; then
+        # RHEL/CentOS：使用 firewalld
+        if ! command -v firewall-cmd &>/dev/null; then
+            _yellow "正在安装 firewalld..."
+            if command -v dnf &>/dev/null; then
+                dnf install -y firewalld &>/dev/null
+            else
+                yum install -y firewalld &>/dev/null
+            fi
+            if ! command -v firewall-cmd &>/dev/null; then
+                _red "firewalld 安装失败，请手动执行: yum install -y firewalld，然后重新运行安装脚本"
+                return 1
+            fi
+            _green "firewalld 安装完成"
+        fi
+        systemctl enable --now firewalld &>/dev/null
+        if ! systemctl is-active --quiet firewalld; then
+            _red "firewalld 启动失败，请手动执行: systemctl enable --now firewalld，然后重新运行安装脚本"
+            return 1
+        fi
+    else
+        _red "未检测到支持的包管理器（apt/yum/dnf），无法安装防火墙，请手动安装 ufw 或 firewalld 后重新运行安装脚本"
+        return 1
     fi
-
-    # 关闭 ufw（如已启用），避免与 firewalld 冲突
-    if command -v ufw &>/dev/null && ufw status 2>/dev/null | grep -q "Status: active"; then
-        ufw disable &>/dev/null
-        _yellow "已关闭 ufw，使用 firewalld 统一管理防火墙"
-    fi
-
-    # 确保 firewalld 已启用并运行
-    systemctl enable --now firewalld &>/dev/null
+    return 0
 }
 
 # 检测当前应使用的防火墙类型
-# 优先级：firewalld（已安装即优先）> ufw（需已激活）
+# 优先级：ufw（Debian/Ubuntu）> firewalld（RHEL/CentOS）
 # 返回: firewalld / ufw / 空（无可用防火墙）
 _fw_type() {
-    if command -v firewall-cmd &>/dev/null; then
-        echo "firewalld"
-    elif ufw status 2>/dev/null | grep -q "Status: active"; then
+    if ufw status 2>/dev/null | grep -q "Status: active"; then
         echo "ufw"
+    elif command -v firewall-cmd &>/dev/null && systemctl is-active --quiet firewalld; then
+        echo "firewalld"
     fi
 }
 

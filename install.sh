@@ -1,7 +1,7 @@
 #!/bin/bash
 
 author=wade0317
-is_sh_ver=v1.1.5
+is_sh_ver=v1.1.6
 # github=https://github.com/wade0317/xray
 
 # bash fonts colors
@@ -457,6 +457,11 @@ main() {
     is_sub_caddy_conf=$is_caddy_dir/sites/subscribe.conf
     is_tmpl_dir=$is_sh_dir/template
 
+    # 初始化防火墙，并开放订阅端口（必须在 Caddy 和协议配置之前完成）
+    load firewall.sh
+    fw_init || exit_and_del_tmpdir
+    fw_allow_sub_port
+
     # 安装 Caddy 及 qrencode（在创建协议配置之前，订阅服务需要）
     if [[ ! -f $is_caddy_bin ]]; then
         echo "$(date +'%T')) 安装 Caddy..."
@@ -520,11 +525,6 @@ main() {
         echo -e "\e[96m╚══════════════════════════════════════════════╝\e[0m"
         echo
     fi
-    # 初始化防火墙（确保 ufw/firewalld 二选一），再开放订阅端口
-    load firewall.sh
-    fw_init
-    fw_allow_sub_port
-
     # remove tmp dir and exit.
     exit_and_del_tmpdir ok
 }
