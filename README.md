@@ -46,20 +46,24 @@
 bash <(wget -qO- https://raw.githubusercontent.com/wade0317/Xray/main/install.sh)
 ```
 
-如果服务器无法访问 GitHub，可下载源码后本地安装：
+如果服务器无法访问 GitHub，可先克隆代码到本机后上传安装：
 
 ```bash
-# 1. 在本机下载源码包
-wget https://github.com/wade0317/Xray/archive/refs/heads/main.zip
+# 1. 在本机克隆代码
+git clone https://github.com/wade0317/Xray.git
 
-# 2. 上传到服务器并解压
-scp main.zip root@your-server:/root/
-ssh root@your-server "unzip main.zip && cd Xray-main && bash install.sh"
+# 2. 上传到服务器并安装
+scp -r Xray root@your-server:/root/
+ssh root@your-server "cd /root/Xray && bash install.sh"
 ```
 
 安装完成后默认添加一个 **VLESS-REALITY** 配置，并自动：
 - 开放对应防火墙端口（如 ufw/firewalld 已启用）
 - 生成订阅文件并输出订阅链接
+
+## 效果预览
+
+![效果预览](res/sample.png)
 
 ## 使用
 
