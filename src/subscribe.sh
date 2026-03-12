@@ -161,19 +161,33 @@ _sub_singbox_outbound() {
                 '{type:"http",path:$path,host:[$host]}')
             ;;
         esac
-        out=$(jq -nc \
-            --arg type "$proto" \
-            --arg tag "$tag" \
-            --arg server "$host" \
-            --argjson port "$is_https_port" \
-            --arg cred_key "$cred_key" \
-            --arg cred_val "$cred_val" \
-            --arg sni "$host" \
-            --argjson transport "$transport" \
-            '{type:$type,tag:$tag,server:$server,server_port:$port,
-              ($cred_key):$cred_val,
-              tls:{enabled:true,server_name:$sni},
-              transport:$transport}')
+        if [[ $proto == "vmess" ]]; then
+            out=$(jq -nc \
+                --arg tag "$tag" \
+                --arg server "$host" \
+                --argjson port "$is_https_port" \
+                --arg uuid "$cred_val" \
+                --arg sni "$host" \
+                --argjson transport "$transport" \
+                '{type:"vmess",tag:$tag,server:$server,server_port:$port,
+                  uuid:$uuid,security:"auto",
+                  tls:{enabled:true,server_name:$sni},
+                  transport:$transport}')
+        else
+            out=$(jq -nc \
+                --arg type "$proto" \
+                --arg tag "$tag" \
+                --arg server "$host" \
+                --argjson port "$is_https_port" \
+                --arg cred_key "$cred_key" \
+                --arg cred_val "$cred_val" \
+                --arg sni "$host" \
+                --argjson transport "$transport" \
+                '{type:$type,tag:$tag,server:$server,server_port:$port,
+                  ($cred_key):$cred_val,
+                  tls:{enabled:true,server_name:$sni},
+                  transport:$transport}')
+        fi
         ;;
     socks)
         out=$(jq -nc \
@@ -238,6 +252,10 @@ EOF
         local cred_line=""
         if [[ $proto == "trojan" ]]; then
             cred_line="    password: ${trojan_password}"
+        elif [[ $proto == "vmess" ]]; then
+            cred_line="    uuid: ${uuid}
+    alterId: 0
+    cipher: auto"
         else
             cred_line="    uuid: ${uuid}"
         fi
@@ -263,7 +281,7 @@ EOF
 EOF
 )
             ;;
-        xhttp | h2)
+        xhttp)
             transport_opts=$(cat <<EOF
     network: http
     http-opts:
@@ -272,6 +290,16 @@ EOF
       headers:
         Host:
           - ${host}
+EOF
+)
+            ;;
+        h2)
+            transport_opts=$(cat <<EOF
+    network: h2
+    h2-opts:
+      path: ${p}
+      host:
+        - ${host}
 EOF
 )
             ;;

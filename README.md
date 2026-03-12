@@ -14,24 +14,28 @@
 
 ## 支持协议
 
-| 协议 | 传输 | Cloudflare | 说明 |
-|------|------|:----------:|------|
-| VMess-TCP | TCP | | 经典协议，无 TLS，不可过 Cloudflare |
-| VMess-mKCP | mKCP | | 基于 UDP，Cloudflare 不支持 UDP 中转 |
-| VMess-WS-TLS | WebSocket | ✓ | 兼容性好，Cloudflare 免费套餐可用 |
-| VMess-gRPC-TLS | gRPC | ✓ | Cloudflare 需开启 gRPC 支持（Pro 套餐） |
-| VLESS-WS-TLS | WebSocket | ✓ | 兼容性最好，Cloudflare 免费套餐可用（443/80/8443 等端口） |
-| VLESS-gRPC-TLS | gRPC | ✓ | 低延迟，Cloudflare 需开启 gRPC 支持（Pro 套餐） |
-| VLESS-XHTTP-TLS | XHTTP | ✓ | 新型传输，行为类似 HTTPS 下载，Cloudflare 可代理 |
-| VLESS-REALITY | TCP | | 推荐使用，抗检测能力强，直连无需域名 |
-| Trojan-WS-TLS | WebSocket | ✓ | 流量伪装为 HTTPS，Cloudflare 免费套餐可用 |
-| Trojan-gRPC-TLS | gRPC | ✓ | Cloudflare 需开启 gRPC 支持（Pro 套餐） |
-| Shadowsocks | TCP | | 轻量加密代理，支持 SS2022，直连使用 |
-| VMess-TCP-dynamic-port | TCP | | 动态端口，防端口封锁，不可过 Cloudflare |
-| VMess-mKCP-dynamic-port | mKCP | | 动态端口 + UDP，Cloudflare 不支持 |
-| Socks5 | TCP | | 本地 SOCKS5 代理，仅供本机使用 |
+| 协议 | 传输 | IP 直连 | 需要域名 | Cloudflare | 说明 |
+|------|------|:-------:|:--------:|:----------:|------|
+| VMess-TCP | TCP | ✓ | | | 经典协议，无 TLS，不可过 Cloudflare |
+| VMess-mKCP | mKCP | ✓ | | | 基于 UDP，Cloudflare 不支持 UDP 中转 |
+| VMess-WS-TLS | WebSocket | | ✓ | ✓ | 兼容性好，Cloudflare 免费套餐可用 |
+| VMess-gRPC-TLS | gRPC | | ✓ | ✓ | Cloudflare 需开启 gRPC 支持（Pro 套餐） |
+| VLESS-WS-TLS | WebSocket | | ✓ | ✓ | 兼容性最好，Cloudflare 免费套餐可用（443/80/8443 等端口） |
+| VLESS-gRPC-TLS | gRPC | | ✓ | ✓ | 低延迟，Cloudflare 需开启 gRPC 支持（Pro 套餐） |
+| VLESS-XHTTP-TLS | XHTTP | | ✓ | ✓ | 新型传输，行为类似 HTTPS 下载，Cloudflare 可代理 |
+| VLESS-REALITY | TCP | ✓ | | | 推荐使用，抗检测能力强，无需域名 |
+| Trojan-WS-TLS | WebSocket | | ✓ | ✓ | 流量伪装为 HTTPS，Cloudflare 免费套餐可用 |
+| Trojan-gRPC-TLS | gRPC | | ✓ | ✓ | Cloudflare 需开启 gRPC 支持（Pro 套餐） |
+| Shadowsocks | TCP | ✓ | | | 轻量加密代理，支持 SS2022 |
+| VMess-TCP-dynamic-port | TCP | ✓ | | | 动态端口，防端口封锁，不可过 Cloudflare |
+| VMess-mKCP-dynamic-port | mKCP | ✓ | | | 动态端口 + UDP，Cloudflare 不支持 |
+| Socks5 | TCP | ✓ | | | 本地 SOCKS5 代理，仅供本机使用 |
 
-> **Cloudflare 使用说明**：标记 ✓ 的协议需将域名托管至 Cloudflare，服务器监听 443 端口，Xray 配置域名后 Cloudflare 自动代理流量（小云朵开启）。WebSocket 协议免费套餐即可使用；gRPC 协议需 Pro 套餐并在 Cloudflare 控制台开启「gRPC」选项。
+> **IP 直连**：无需域名，直接用服务器 IP + 端口连接，安装后即可使用。
+>
+> **需要域名**：使用 TLS 加密，由 Caddy 自动申请 Let's Encrypt 证书，必须拥有**真实域名**并将 DNS A 记录解析到服务器 IP。
+>
+> **Cloudflare**：需将域名托管至 Cloudflare 并开启代理（小云朵），服务器监听 443 端口。WebSocket 免费套餐可用；gRPC 需 Pro 套餐并在控制台开启「gRPC」选项。
 
 ## 系统要求
 
@@ -41,6 +45,11 @@
 - 依赖：systemd
 
 ## 安装
+
+> 如果已安装过脚本，无需重新安装，直接执行以下命令更新到最新版本（节点配置保留不变）：
+> ```bash
+> xray update sh
+> ```
 
 ```bash
 bash <(wget -qO- https://raw.githubusercontent.com/wade0317/Xray/main/install.sh)
@@ -151,16 +160,18 @@ https://{domain}/sub/{token}/base64.txt
 
 ### 防火墙管理
 
-脚本统一使用 **firewalld** 管理系统防火墙，安装时自动处理：
+脚本自动检测并适配系统防火墙，优先使用已运行的防火墙，无则尝试安装：
 
-- 未安装 firewalld → 自动安装并启用
-- 检测到 ufw 已启用 → 自动关闭 ufw，避免两者冲突
-
-> **为什么要关闭 ufw？** firewalld 和 ufw 都通过 iptables 工作，同时运行时 firewalld 的规则优先执行，ufw 的放行规则会被 firewalld 的拒绝规则拦截，导致端口实际上无法访问。
+| 检测顺序 | 条件 | 处理方式 |
+|---------|------|---------|
+| 1 | ufw 已激活 | 直接使用 ufw；清除云平台预置的冲突 iptables 规则 |
+| 2 | firewalld 已运行 | 直接使用 firewalld |
+| 3 | iptables 接管（如 Oracle Cloud） | 清除预置 REJECT/DROP 规则，放行基础端口 |
+| 4 | 无防火墙 | Debian/Ubuntu 自动安装 ufw；CentOS/RHEL 自动安装 firewalld |
 
 | 操作 | 防火墙行为 |
 |------|----------|
-| 安装时 | 自动安装 firewalld，关闭 ufw，开放订阅端口 2096 |
+| 安装时 | 检测防火墙类型，开放 22、80、443、2096 端口 |
 | `xray add` | 自动开放对应端口（TLS 协议开放 443，直连协议开放监听端口） |
 | `xray del` | 检查端口是否仍被使用，无其他配置使用时自动关闭 |
 
@@ -257,7 +268,7 @@ https://{domain}/sub/{token}/base64.txt
 
 ### 系统防火墙
 
-脚本统一使用 **firewalld** 管理防火墙，安装时自动处理冲突：若检测到 ufw 已启用，会自动将其关闭。
+脚本自动检测系统防火墙类型（ufw / firewalld / iptables），按实际运行状态进行适配，无需手动干预。
 
 **脚本默认开放的端口：**
 
@@ -269,29 +280,19 @@ https://{domain}/sub/{token}/base64.txt
 | `3000` | VLESS-REALITY 节点（默认） |
 | `8080` | VLESS-REALITY 节点（默认） |
 
-**常用 firewalld 命令：**
+**常用防火墙命令（按系统类型选择）：**
 
 ```bash
-# 查看已开放的端口
-firewall-cmd --list-ports
+# ufw（Ubuntu / Debian）
+ufw status                        # 查看状态及已开放端口
+ufw allow 端口号/tcp               # 手动开放端口
+ufw delete allow 端口号/tcp        # 手动关闭端口
 
-# 查看完整防火墙规则（含服务、端口）
-firewall-cmd --list-all
-
-# 手动开放端口
-firewall-cmd --permanent --add-port=端口号/tcp
-firewall-cmd --reload
-
-# 手动关闭端口
-firewall-cmd --permanent --remove-port=端口号/tcp
-firewall-cmd --reload
-```
-
-**如果服务器安装脚本前已手动启用 ufw，建议先检查并关闭：**
-
-```bash
-ufw status          # 查看 ufw 状态
-ufw disable         # 关闭 ufw（脚本安装时也会自动执行）
+# firewalld（CentOS / RHEL）
+firewall-cmd --list-ports                            # 查看已开放端口
+firewall-cmd --permanent --add-port=端口号/tcp       # 手动开放端口
+firewall-cmd --permanent --remove-port=端口号/tcp    # 手动关闭端口
+firewall-cmd --reload                                # 重载规则
 ```
 
 ### 云服务器安全组
