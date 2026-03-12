@@ -103,7 +103,7 @@ xray url [name]
 # 删除节点
 xray del [name]
 
-# 查看订阅链接
+# 重新生成订阅并显示订阅链接
 xray sub
 ```
 
@@ -133,7 +133,15 @@ https://{domain}/sub/{token}/singbox.json
 https://{domain}/sub/{token}/base64.txt
 ```
 
-使用 `xray sub` 随时查看当前订阅链接。
+执行 `xray sub` 可**重新生成**所有订阅文件并显示最新链接，适用于以下场景：
+
+- 更新脚本后（`xray update sh`）需要让新模板规则生效
+- 手动修改了订阅模板（路由规则、DNS 配置等）
+- 任何想强制刷新订阅文件的情况
+
+```bash
+xray sub
+```
 
 > 订阅端口默认为 **2096**，Token 在安装时随机生成，存储于 `/etc/xray/subscribe/token`。
 > 配置域名后会同时提供 HTTPS 域名链接和 IP 直连备用链接。
@@ -156,7 +164,7 @@ https://{domain}/sub/{token}/base64.txt
 └── clash-vpn.yaml      # Mihomo/Clash 客户端模板
 ```
 
-修改模板后，执行任意 `xray add` 或 `xray del` 操作，新的订阅文件将自动使用更新后的模板。
+修改模板后，执行 `xray sub` 即可立即用新模板重新生成订阅文件，无需新增或删除节点。
 
 ### 防火墙管理
 

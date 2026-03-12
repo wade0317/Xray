@@ -1877,6 +1877,7 @@ main() {
         ;;
     sub | subscribe)
         load subscribe.sh
+        gen_subscribe
         show_sub_link
         ;;
     url | qr)

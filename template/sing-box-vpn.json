@@ -218,6 +218,11 @@
                 "outbound": "direct"
             },
             {
+                "rule_set": ["geosite-geolocation-cn"],
+                "action": "route",
+                "outbound": "direct"
+            },
+            {
                 "rule_set": ["geoip-cn"],
                 "action": "route",
                 "outbound": "direct"
