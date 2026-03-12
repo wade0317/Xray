@@ -83,6 +83,8 @@ fw_init() {
                 ufw allow ${is_sub_port}/tcp &>/dev/null
                 ufw --force enable &>/dev/null
                 if ufw status 2>/dev/null | grep -q "Status: active"; then
+                    # ufw 启用后清除可能存在的 OCI 预置冲突规则
+                    _fw_clean_legacy_rules
                     _green "ufw 安装并启用完成"
                 else
                     _yellow "ufw 启用失败，请确保云平台安全组已放行所需端口（22、80、443、${is_sub_port}）"
