@@ -27,7 +27,7 @@
                 "server": "fake-ip"
             },
             {
-                "domain_suffix": [".cn"],
+                "domain_suffix": [".cn", "gitee.com"],
                 "action": "route",
                 "server": "local"
             },
