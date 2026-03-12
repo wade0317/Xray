@@ -1714,9 +1714,20 @@ is_main_menu() {
         change
         ;;
     3)
-        info
-        load subscribe.sh
-        show_sub_link
+        is_tmp_list=("查看配置" "更新订阅配置")
+        ask list is_do_view null "\n请选择:\n"
+        case $REPLY in
+        1)
+            info
+            load subscribe.sh
+            show_sub_link
+            ;;
+        2)
+            load subscribe.sh
+            gen_subscribe
+            show_sub_link
+            ;;
+        esac
         ;;
     4)
         del

@@ -107,6 +107,37 @@ xray del [name]
 xray sub
 ```
 
+### 更新
+
+```bash
+xray update sh            # 更新管理脚本（保留所有节点配置）
+xray update core          # 更新 Xray-core 内核
+xray update dat           # 更新 geoip / geosite 规则库
+xray update caddy         # 更新 Caddy
+```
+
+### 服务管理
+
+```bash
+xray status               # 查看运行状态
+xray restart              # 重启 Xray
+xray restart caddy        # 重启 Caddy
+xray start                # 启动 Xray
+xray stop                 # 停止 Xray
+xray log                  # 查看运行日志
+xray logerr               # 查看错误日志
+```
+
+### 其他
+
+```bash
+xray bbr                  # 启用 BBR 拥塞控制加速
+xray version              # 查看当前版本
+xray ip                   # 查看服务器 IP
+xray get-port             # 获取一个可用端口
+xray ss2022               # 生成 Shadowsocks 2022 密码
+```
+
 ### 订阅链接
 
 每次添加或删除节点后，脚本自动重新生成以下三种订阅文件：

@@ -42,7 +42,7 @@
                 "server": "fake-ip"
             }
         ],
-        "final": "google",
+        "final": "local",
         "strategy": "prefer_ipv4",
         "independent_cache": true,
         "cache_capacity": 1024,
