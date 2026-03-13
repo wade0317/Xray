@@ -19,13 +19,13 @@
 | VMess-TCP | TCP | ✓ | | | 经典协议，无 TLS，不可过 Cloudflare |
 | VMess-mKCP | mKCP | ✓ | | | 基于 UDP，Cloudflare 不支持 UDP 中转 |
 | VMess-WS-TLS | WebSocket | | ✓ | ✓ | 兼容性好，Cloudflare 免费套餐可用 |
-| VMess-gRPC-TLS | gRPC | | ✓ | ✓ | Cloudflare 需开启 gRPC 支持（Pro 套餐） |
+| VMess-gRPC-TLS | gRPC | | ✓ | ✓ | Cloudflare 需在后台开启 gRPC 支持 |
 | VLESS-WS-TLS | WebSocket | | ✓ | ✓ | 兼容性最好，Cloudflare 免费套餐可用（443/80/8443 等端口） |
-| VLESS-gRPC-TLS | gRPC | | ✓ | ✓ | 低延迟，Cloudflare 需开启 gRPC 支持（Pro 套餐） |
+| VLESS-gRPC-TLS | gRPC | | ✓ | ✓ | 低延迟，Cloudflare 需在后台开启 gRPC 支持 |
 | VLESS-XHTTP-TLS | XHTTP | | ✓ | ✓ | 新型传输，行为类似 HTTPS 下载，Cloudflare 可代理 |
 | VLESS-REALITY | TCP | ✓ | | | 推荐使用，抗检测能力强，无需域名 |
 | Trojan-WS-TLS | WebSocket | | ✓ | ✓ | 流量伪装为 HTTPS，Cloudflare 免费套餐可用 |
-| Trojan-gRPC-TLS | gRPC | | ✓ | ✓ | Cloudflare 需开启 gRPC 支持（Pro 套餐） |
+| Trojan-gRPC-TLS | gRPC | | ✓ | ✓ | Cloudflare 需在后台开启 gRPC 支持 |
 | Shadowsocks | TCP | ✓ | | | 轻量加密代理，支持 SS2022 |
 | VMess-TCP-dynamic-port | TCP | ✓ | | | 动态端口，防端口封锁，不可过 Cloudflare |
 | VMess-mKCP-dynamic-port | mKCP | ✓ | | | 动态端口 + UDP，Cloudflare 不支持 |
@@ -35,7 +35,7 @@
 >
 > **需要域名**：使用 TLS 加密，由 Caddy 自动申请 Let's Encrypt 证书，必须拥有**真实域名**并将 DNS A 记录解析到服务器 IP。
 >
-> **Cloudflare**：需将域名托管至 Cloudflare 并开启代理（小云朵），服务器监听 443 端口。WebSocket 免费套餐可用；gRPC 需 Pro 套餐并在控制台开启「gRPC」选项。
+> **Cloudflare**：需将域名托管至 Cloudflare 并开启代理（小云朵），服务器监听 443 端口。WebSocket / gRPC 免费套餐均可用；使用 gRPC 需在 Cloudflare 控制台「网络」选项中开启「gRPC」开关。
 
 ## 系统要求
 
