@@ -1,7 +1,7 @@
 #!/bin/bash
 
 author=wade0317
-is_sh_ver=v1.2.5
+is_sh_ver=v1.2.6
 # github=https://github.com/wade0317/xray
 
 # bash fonts colors
@@ -475,9 +475,10 @@ main() {
     fi
     [[ ! $(type -P qrencode) ]] && $cmd install -y qrencode &>/dev/null
 
-    # 默认安装 VLESS-REALITY (3000) + Shadowsocks (8080)
+    # 默认安装 VLESS-REALITY (3000) + Shadowsocks (8080) + VMess-mKCP (4000)
     add reality 3000
     add ss 8080
+    add kcp 4000
 
     # 初始化订阅 token
     load subscribe.sh

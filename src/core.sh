@@ -1116,7 +1116,7 @@ add() {
             [[ ! $port ]] && ask string port "请输入端口:"
 
             case ${is_new_protocol,,} in
-            *tcp* | *kcp* | *quic*)
+            *tcp* | *quic*)
                 [[ ! $header_type ]] && ask set_header_type
                 ;;
             socks)
@@ -1219,10 +1219,10 @@ get() {
             is_json_str=$(cat $is_conf_dir/"$is_config_file")
             is_json_data_base=$(jq '.inbounds[0]|.protocol,.port,(.settings|(.clients[0]|.id,.password),.method,.password,.address,.port,.detour.to,(.accounts[0]|.user,.pass))' <<<$is_json_str)
             [[ $? != 0 ]] && err "无法读取此文件: $is_config_file"
-            is_json_data_more=$(jq '.inbounds[0]|.streamSettings|.network,.tcpSettings.header.type,(.kcpSettings|.seed,.header.type),.quicSettings.header.type,.wsSettings.path,.httpSettings.path,.grpcSettings.serviceName,.xhttpSettings.path' <<<$is_json_str)
+            is_json_data_more=$(jq '.inbounds[0]|.streamSettings|.network,.tcpSettings.header.type,(.kcpSettings|.seed,.header.type),.quicSettings.header.type,.wsSettings.path,.httpSettings.path,.grpcSettings.serviceName,.xhttpSettings.path,.finalmask.type,.finalmask.settings.password' <<<$is_json_str)
             is_json_data_host=$(jq '.inbounds[0]|.streamSettings|.grpc_host,.wsSettings.headers.Host,.httpSettings.host[0],.xhttpSettings.host' <<<$is_json_str)
             is_json_data_reality=$(jq '.inbounds[0]|.streamSettings|.security,(.realitySettings|.serverNames[0],.publicKey,.privateKey)' <<<$is_json_str)
-            is_up_var_set=(null is_protocol port uuid trojan_password ss_method ss_password door_addr door_port is_dynamic_port is_socks_user is_socks_pass net tcp_type kcp_seed kcp_type quic_type ws_path h2_path grpc_path xhttp_path grpc_host ws_host h2_host xhttp_host is_reality is_servername is_public_key is_private_key)
+            is_up_var_set=(null is_protocol port uuid trojan_password ss_method ss_password door_addr door_port is_dynamic_port is_socks_user is_socks_pass net tcp_type kcp_seed kcp_type quic_type ws_path h2_path grpc_path xhttp_path grpc_host ws_host h2_host xhttp_host fmask_type fmask_pass is_reality is_servername is_public_key is_private_key)
             [[ $is_debug ]] && msg "\n------------- debug: $is_config_file -------------"
             i=0
             for v in $(sed 's/""/null/g;s/"//g' <<<"$is_json_data_base $is_json_data_more $is_json_data_host $is_json_data_reality"); do
@@ -1230,6 +1230,15 @@ get() {
                 [[ $is_debug ]] && msg "$i-${is_up_var_set[$i]}: $v"
                 export ${is_up_var_set[$i]}="${v}"
             done
+            # 适配 v26 finalmask 回填变量
+            [[ $fmask_pass != 'null' ]] && kcp_seed=$fmask_pass
+            if [[ $fmask_type != 'null' ]]; then
+                case $fmask_type in
+                    header-wechat) kcp_type="wechat-video" ;;
+                    header-*) kcp_type=${fmask_type#header-} ;;
+                    mkcp-*) kcp_type="none" ;;
+                esac
+            fi
             for v in ${is_up_var_set[@]}; do
                 [[ ${!v} == 'null' ]] && unset $v
             done
@@ -1347,7 +1356,18 @@ get() {
             net=kcp
             [[ ! $header_type ]] && header_type=$is_random_header_type
             [[ ! $is_no_kcp_seed && ! $kcp_seed ]] && kcp_seed=$uuid
-            is_stream='kcpSettings:{seed:"'$kcp_seed'",header:{type:"'$header_type'"}}'
+            # Xray v26+ compatibility: move seed/header to finalmask
+            if [[ $kcp_seed && $kcp_seed != "null" ]]; then
+                is_stream='kcpSettings:{},finalmask:{type:"mkcp-aes128gcm",settings:{password:"'$kcp_seed'"}}'
+            else
+                local fmask_type="mkcp-original"
+                case $header_type in
+                    none) fmask_type="mkcp-original" ;;
+                    wechat-video) fmask_type="header-wechat" ;;
+                    *) fmask_type="header-$header_type" ;;
+                esac
+                is_stream='kcpSettings:{},finalmask:{type:"'$fmask_type'"}'
+            fi
             ;;
         *quic*)
             net=quic

@@ -122,6 +122,17 @@ _sub_singbox_outbound() {
                   tls:{enabled:true,server_name:$sni,
                        utls:{enabled:true,fingerprint:"chrome"},
                        reality:{enabled:true,public_key:$pubkey}}}')
+        elif [[ $net == 'kcp' ]]; then
+            local kcp_transport
+            kcp_transport=$(jq -nc --arg seed "$kcp_seed" --arg htype "${kcp_type:-none}" \
+                '{type:"kcp",seed:$seed,header:{type:$htype}}')
+            out=$(jq -nc \
+                --arg tag "$tag" \
+                --arg server "$is_addr" \
+                --argjson port "$port" \
+                --arg uuid "$uuid" \
+                --argjson transport "$kcp_transport" \
+                '{type:"vmess",tag:$tag,server:$server,server_port:$port,uuid:$uuid,security:"auto",transport:$transport}')
         else
             out=$(jq -nc \
                 --arg tag "$tag" \
