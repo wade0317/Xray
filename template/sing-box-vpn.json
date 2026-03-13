@@ -36,8 +36,7 @@
                 ],
                 "action": "route",
                 "server": "local",
-                "disable_cache": true,
-                "strategy": "prefer_ipv4"
+                "disable_cache": true
             },
             {
                 "clash_mode": "Direct",
