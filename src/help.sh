@@ -37,7 +37,6 @@ show_help() {
             "   type [name] [type | auto]                       更改伪装类型"
             "   method [name] [method | auto]                   更改加密方式"
             "   sni [name] [ ip | domain]                       更改 serverName"
-            "   seed [name] [seed | auto]                       更改 mKCP seed"
             "   new [name] [...]                                更改协议"
             "   web [name] [domain]                             更改伪装网站\n"
             "进阶:"
@@ -71,6 +70,7 @@ show_help() {
         for v in "${help_info[@]}"; do
             msg "$v"
         done
+        msg "说明: mKCP(kcp) 已不再提供创建入口，因 sing-box / Mihomo 客户端不支持。"
         msg "谨慎使用 del, ddel, 此选项会直接删除配置; 无需确认"
         msg "反馈问题) $(msg_ul https://github.com/${is_sh_repo}/issues) "
         ;;

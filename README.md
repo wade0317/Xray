@@ -17,7 +17,6 @@
 | 协议 | 传输 | IP 直连 | 需要域名 | Cloudflare | 说明 |
 |------|------|:-------:|:--------:|:----------:|------|
 | VMess-TCP | TCP | ✓ | | | 经典协议，无 TLS，不可过 Cloudflare |
-| VMess-mKCP | mKCP | ✓ | | | 基于 UDP，Cloudflare 不支持 UDP 中转 |
 | VMess-WS-TLS | WebSocket | | ✓ | ✓ | 兼容性好，Cloudflare 免费套餐可用 |
 | VMess-gRPC-TLS | gRPC | | ✓ | ✓ | Cloudflare 需在后台开启 gRPC 支持 |
 | VLESS-WS-TLS | WebSocket | | ✓ | ✓ | 兼容性最好，Cloudflare 免费套餐可用（443/80/8443 等端口） |
@@ -28,7 +27,6 @@
 | Trojan-gRPC-TLS | gRPC | | ✓ | ✓ | Cloudflare 需在后台开启 gRPC 支持 |
 | Shadowsocks | TCP | ✓ | | | 轻量加密代理，支持 SS2022 |
 | VMess-TCP-dynamic-port | TCP | ✓ | | | 动态端口，防端口封锁，不可过 Cloudflare |
-| VMess-mKCP-dynamic-port | mKCP | ✓ | | | 动态端口 + UDP，Cloudflare 不支持 |
 | Socks5 | TCP | ✓ | | | 本地 SOCKS5 代理，仅供本机使用 |
 
 > **IP 直连**：无需域名，直接用服务器 IP + 端口连接，安装后即可使用。
@@ -249,7 +247,6 @@ xray sub
    type [name] [type | auto]                       更改伪装类型
    method [name] [method | auto]                   更改加密方式
    sni [name] [ip | domain]                        更改 serverName
-   seed [name] [seed | auto]                       更改 mKCP seed
    new [name] [...]                                更改协议
    web [name] [domain]                             更改伪装网站
 

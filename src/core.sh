@@ -2,7 +2,6 @@
 
 protocol_list=(
     VMess-TCP
-    VMess-mKCP
     # VMess-QUIC
     # VMess-H2-TLS
     VMess-WS-TLS
@@ -18,7 +17,6 @@ protocol_list=(
     Shadowsocks
     # Dokodemo-Door
     VMess-TCP-dynamic-port
-    VMess-mKCP-dynamic-port
     # VMess-QUIC-dynamic-port
     Socks
 )
@@ -110,6 +108,14 @@ msg() {
 
 msg_ul() {
     echo -e "\e[4m$@\e[0m"
+}
+
+# client-facing port for subscriptions / URLs
+set_client_port() {
+    is_client_port=$port
+    if [[ $host && $is_caddy && ! $is_no_auto_tls && -f $is_caddy_conf/$host.conf ]]; then
+        is_client_port=$is_https_port
+    fi
 }
 
 # pause
@@ -886,8 +892,8 @@ add() {
     is_lower=${1,,}
     if [[ $is_lower ]]; then
         case $is_lower in
-        # tcp | kcp | quic | tcpd | kcpd | quicd)
-        tcp | kcp | tcpd | kcpd)
+        # tcp | quic | tcpd | quicd)
+        tcp | tcpd)
             is_new_protocol=VMess-$(sed 's/^K/mK/;s/D$/-dynamic-port/' <<<${is_lower^^})
             ;;
         # ws | h2 | grpc | vws | vh2 | vgrpc | tws | th2 | tgrpc)
@@ -1222,7 +1228,7 @@ get() {
             is_json_data_more=$(jq '.inbounds[0]|.streamSettings|.network,.tcpSettings.header.type,(.kcpSettings|.seed,.header.type),.quicSettings.header.type,.wsSettings.path,.httpSettings.path,.grpcSettings.serviceName,.xhttpSettings.path,.finalmask.type,.finalmask.settings.password' <<<$is_json_str)
             is_json_data_host=$(jq '.inbounds[0]|.streamSettings|.grpc_host,.wsSettings.headers.Host,.httpSettings.host[0],.xhttpSettings.host' <<<$is_json_str)
             is_json_data_reality=$(jq '.inbounds[0]|.streamSettings|.security,(.realitySettings|.serverNames[0],.publicKey,.privateKey)' <<<$is_json_str)
-            is_up_var_set=(null is_protocol port uuid trojan_password ss_method ss_password door_addr door_port is_dynamic_port is_socks_user is_socks_pass net tcp_type kcp_seed kcp_type quic_type ws_path h2_path grpc_path xhttp_path grpc_host ws_host h2_host xhttp_host fmask_type fmask_pass is_reality is_servername is_public_key is_private_key)
+            is_up_var_set=(null is_protocol port uuid trojan_password ss_method ss_password door_addr door_port is_dynamic_port is_socks_user is_socks_pass net tcp_type kcp_seed kcp_type quic_type ws_path h2_path grpc_path xhttp_path fmask_type fmask_pass grpc_host ws_host h2_host xhttp_host is_reality is_servername is_public_key is_private_key)
             [[ $is_debug ]] && msg "\n------------- debug: $is_config_file -------------"
             i=0
             for v in $(sed 's/""/null/g;s/"//g' <<<"$is_json_data_base $is_json_data_more $is_json_data_host $is_json_data_reality"); do
@@ -1271,7 +1277,8 @@ get() {
                 is_no_auto_tls=1
             fi
             [[ $is_tmp_https_port ]] && is_https_port=$is_tmp_https_port
-            [[ $is_client && $host ]] && port=$is_https_port
+            set_client_port
+            [[ $is_client && $host ]] && port=$is_client_port
             get protocol $is_protocol-$net
         fi
         ;;
@@ -1529,6 +1536,7 @@ info() {
     if [[ ! $is_protocol ]]; then
         get info $1
     fi
+    set_client_port
     # is_color=$(shuf -i 41-45 -n1)
     is_color=44
     case $net in
@@ -1571,7 +1579,7 @@ info() {
             is_url_path=serviceName
         }
         [[ $is_protocol == 'vmess' ]] && {
-            is_vmess_url=$(jq -c '{v:2,ps:"'xray-$net-$host'",add:"'$is_addr'",port:"'$is_https_port'",id:"'$uuid'",aid:"0",net:"'$net'",host:"'$host'",path:"'$path'",tls:"'tls'"}' <<<{})
+            is_vmess_url=$(jq -c '{v:2,ps:"'xray-$net-$host'",add:"'$is_addr'",port:"'$is_client_port'",id:"'$uuid'",aid:"0",net:"'$net'",host:"'$host'",path:"'$path'",tls:"'tls'"}' <<<{})
             is_url=vmess://$(echo -n $is_vmess_url | base64 -w 0)
         } || {
             [[ $is_trojan ]] && {
@@ -1579,10 +1587,10 @@ info() {
                 is_can_change=(0 1 2 3 4)
                 is_info_show=(0 1 2 10 4 6 7 8)
             }
-            is_url="$is_protocol://$uuid@$host:$is_https_port?encryption=none&security=tls&type=$net&host=$host&${is_url_path}=$(sed 's#/#%2F#g' <<<$path)#xray-$net-$host"
+            is_url="$is_protocol://$uuid@$host:$is_client_port?encryption=none&security=tls&type=$net&host=$host&${is_url_path}=$(sed 's#/#%2F#g' <<<$path)#xray-$net-$host"
         }
         [[ $is_caddy ]] && is_can_change+=(13)
-        is_info_str=($is_protocol $is_addr $is_https_port $uuid $net $host $path 'tls')
+        is_info_str=($is_protocol $is_addr $is_client_port $uuid $net $host $path 'tls')
         ;;
     door)
         is_can_change=(0 1 8 9)

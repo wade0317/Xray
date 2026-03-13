@@ -31,15 +31,15 @@ show_sub_link() {
             msg ""
             msg "Clash (Mihomo) 订阅地址 - 推荐:"
             msg ""
-            msg "  ${base}/clash.yaml"
+            msg "\e[92m${base}/clash.yaml\e[0m"
             msg ""
             msg "Sing-box 订阅地址:"
             msg ""
-            msg "  ${base}/singbox.json"
+            msg "\e[92m${base}/singbox.json\e[0m"
             msg ""
             msg "V2ray/NekoBox 通用订阅地址 (Base64):"
             msg ""
-            msg "  ${base}/base64.txt"
+            msg "\e[92m${base}/base64.txt\e[0m"
             has_domain=1
             break
         done
@@ -52,15 +52,15 @@ show_sub_link() {
     msg ""
     msg "Clash (Mihomo) 订阅地址 - 推荐:"
     msg ""
-    msg "  ${base_ip}/clash.yaml"
+    msg "\e[92m${base_ip}/clash.yaml\e[0m"
     msg ""
     msg "Sing-box 订阅地址:"
     msg ""
-    msg "  ${base_ip}/singbox.json"
+    msg "\e[92m${base_ip}/singbox.json\e[0m"
     msg ""
     msg "V2ray/NekoBox 通用订阅地址 (Base64):"
     msg ""
-    msg "  ${base_ip}/base64.txt"
+    msg "\e[92m${base_ip}/base64.txt\e[0m"
     msg ""
 
     msg "==================================="
@@ -89,12 +89,12 @@ _sub_get_url() {
         [[ $net == 'grpc' ]] && { url_path=serviceName; p=$(sed 's#/##g' <<<$p); }
         if [[ $is_protocol == 'vmess' ]]; then
             local vmess_json
-            vmess_json=$(jq -c '{v:2,ps:"'${tag}'",add:"'$is_addr'",port:"'$is_https_port'",id:"'$uuid'",aid:"0",net:"'$net'",host:"'$host'",path:"'$p'",tls:"tls"}' <<<{})
+            vmess_json=$(jq -c '{v:2,ps:"'${tag}'",add:"'$is_addr'",port:"'$is_client_port'",id:"'$uuid'",aid:"0",net:"'$net'",host:"'$host'",path:"'$p'",tls:"tls"}' <<<{})
             url="vmess://$(echo -n $vmess_json | base64 -w 0)"
         else
             local cred=$uuid
             [[ $is_trojan ]] && cred=$trojan_password
-            url="${is_protocol}://${cred}@${host}:${is_https_port}?encryption=none&security=tls&type=${net}&host=${host}&${url_path}=$(sed 's#/#%2F#g' <<<$p)#${tag}"
+            url="${is_protocol}://${cred}@${host}:${is_client_port}?encryption=none&security=tls&type=${net}&host=${host}&${url_path}=$(sed 's#/#%2F#g' <<<$p)#${tag}"
         fi
         ;;
     socks)
@@ -123,16 +123,8 @@ _sub_singbox_outbound() {
                        utls:{enabled:true,fingerprint:"chrome"},
                        reality:{enabled:true,public_key:$pubkey}}}')
         elif [[ $net == 'kcp' ]]; then
-            local kcp_transport
-            kcp_transport=$(jq -nc --arg seed "$kcp_seed" --arg htype "${kcp_type:-none}" \
-                '{type:"kcp",seed:$seed,header:{type:$htype}}')
-            out=$(jq -nc \
-                --arg tag "$tag" \
-                --arg server "$is_addr" \
-                --argjson port "$port" \
-                --arg uuid "$uuid" \
-                --argjson transport "$kcp_transport" \
-                '{type:"vmess",tag:$tag,server:$server,server_port:$port,uuid:$uuid,security:"auto",transport:$transport}')
+            # Sing-box 不支持 mKCP (kcp) 传输协议，因此忽略
+            out=""
         else
             out=$(jq -nc \
                 --arg tag "$tag" \
@@ -176,7 +168,7 @@ _sub_singbox_outbound() {
             out=$(jq -nc \
                 --arg tag "$tag" \
                 --arg server "$host" \
-                --argjson port "$is_https_port" \
+                --argjson port "$is_client_port" \
                 --arg uuid "$cred_val" \
                 --arg sni "$host" \
                 --argjson transport "$transport" \
@@ -189,7 +181,7 @@ _sub_singbox_outbound() {
                 --arg type "$proto" \
                 --arg tag "$tag" \
                 --arg server "$host" \
-                --argjson port "$is_https_port" \
+                --argjson port "$is_client_port" \
                 --arg cred_key "$cred_key" \
                 --arg cred_val "$cred_val" \
                 --arg sni "$host" \
@@ -219,6 +211,8 @@ _sub_mihomo_proxy() {
     local tag="$1"
     case $net in
     tcp | kcp | quic)
+        # Mihomo 不支持 mKCP (kcp) 传输协议，因此忽略
+        [[ $net == 'kcp' ]] && return
         if [[ $is_reality ]]; then
             cat <<EOF
   - name: "${tag}"
@@ -319,7 +313,7 @@ EOF
   - name: "${tag}"
     type: ${proto}
     server: ${host}
-    port: ${is_https_port}
+    port: ${is_client_port}
 ${cred_line}
     tls: true
     servername: ${host}
