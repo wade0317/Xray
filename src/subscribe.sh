@@ -73,7 +73,7 @@ _sub_get_url() {
     case $net in
     tcp | kcp | quic)
         if [[ $is_reality ]]; then
-            url="$is_protocol://$uuid@$is_addr:$port?encryption=none&security=reality&flow=xtls-rprx-vision&type=tcp&sni=$is_servername&pbk=$is_public_key&fp=chrome#${tag}"
+            url="$is_protocol://$uuid@$is_addr:$port?encryption=none&security=reality&flow=xtls-rprx-vision&type=tcp&sni=$is_servername&pbk=$is_public_key&fp=chrome&sid=$is_short_id#${tag}"
         else
             local vmess_json
             vmess_json=$(jq -c '{v:2,ps:"'${tag}'",add:"'$is_addr'",port:"'$port'",id:"'$uuid'",aid:"0",net:"'$net'",type:"'$header_type'",path:"'$kcp_seed'"}' <<<{})
@@ -118,10 +118,11 @@ _sub_singbox_outbound() {
                 --arg uuid "$uuid" \
                 --arg sni "$is_servername" \
                 --arg pubkey "$is_public_key" \
+                --arg sid "$is_short_id" \
                 '{type:"vless",tag:$tag,server:$server,server_port:$port,uuid:$uuid,flow:"xtls-rprx-vision",
                   tls:{enabled:true,server_name:$sni,
                        utls:{enabled:true,fingerprint:"chrome"},
-                       reality:{enabled:true,public_key:$pubkey}}}')
+                       reality:{enabled:true,public_key:$pubkey,short_id:$sid}}}')
         elif [[ $net == 'kcp' ]]; then
             # Sing-box 不支持 mKCP (kcp) 传输协议，因此忽略
             out=""
@@ -164,17 +165,25 @@ _sub_singbox_outbound() {
                 '{type:"http",path:$path,host:[$host]}')
             ;;
         esac
+        local tls_json=""
+        if [[ $net == 'grpc' ]]; then
+            tls_json=$(jq -nc --arg sni "$host" \
+                '{enabled:true,server_name:$sni,alpn:["h2"]}')
+        else
+            tls_json=$(jq -nc --arg sni "$host" \
+                '{enabled:true,server_name:$sni}')
+        fi
         if [[ $proto == "vmess" ]]; then
             out=$(jq -nc \
                 --arg tag "$tag" \
                 --arg server "$host" \
                 --argjson port "$is_client_port" \
                 --arg uuid "$cred_val" \
-                --arg sni "$host" \
+                --argjson tls "$tls_json" \
                 --argjson transport "$transport" \
                 '{type:"vmess",tag:$tag,server:$server,server_port:$port,
                   uuid:$uuid,security:"auto",
-                  tls:{enabled:true,server_name:$sni},
+                  tls:$tls,
                   transport:$transport}')
         else
             out=$(jq -nc \
@@ -184,11 +193,11 @@ _sub_singbox_outbound() {
                 --argjson port "$is_client_port" \
                 --arg cred_key "$cred_key" \
                 --arg cred_val "$cred_val" \
-                --arg sni "$host" \
+                --argjson tls "$tls_json" \
                 --argjson transport "$transport" \
                 '{type:$type,tag:$tag,server:$server,server_port:$port,
                   ($cred_key):$cred_val,
-                  tls:{enabled:true,server_name:$sni},
+                  tls:$tls,
                   transport:$transport}')
         fi
         ;;
@@ -224,7 +233,7 @@ _sub_mihomo_proxy() {
     tls: true
     reality-opts:
       public-key: ${is_public_key}
-      short-id: ""
+      short-id: "${is_short_id}"
     client-fingerprint: chrome
     servername: ${is_servername}
     network: tcp
@@ -350,9 +359,13 @@ _gen_singbox_config() {
        --arg default_tag "$first_tag" \
        '.outbounds = [
            {"type":"direct","tag":"direct"},
-           {"type":"selector","tag":"proxy",
+           {"type":"urltest","tag":"auto",
             "outbounds": $tag_arr,
-            "default": $default_tag}
+            "interval": "3m",
+            "tolerance": 50},
+           {"type":"selector","tag":"proxy",
+            "outbounds": (["auto"] + $tag_arr),
+            "default": "auto"}
        ] + $nodes |
        ($nodes | map(.server // empty) | unique) as $servers |
        ($servers | map(select(test("^([0-9]{1,3}\\.){3}[0-9]{1,3}$") or test("^[0-9a-fA-F:]+:[0-9a-fA-F:]+$") | not))) as $server_domains |
@@ -423,7 +436,7 @@ gen_subscribe() {
         # 清理上次循环残留变量
         unset is_protocol port uuid host net path trojan_password ss_method \
               ss_password is_socks_user is_socks_pass is_reality is_servername \
-              is_public_key is_https_port is_addr is_config_file is_dynamic_port \
+              is_public_key is_short_id is_https_port is_addr is_config_file is_dynamic_port \
               header_type kcp_seed is_trojan is_no_auto_tls
         is_config_file=$f
         get info "$f"

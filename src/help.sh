@@ -44,6 +44,8 @@ show_help() {
             "   dd, ddel [name...]                              删除多个配置**"
             "   fix [name]                                      修复一个配置"
             "   fix-all                                         修复全部配置"
+            "   fix-short-id [name]                             修复一个旧 Reality 配置的 short_id"
+            "   fix-short-id-all                                修复全部旧 Reality 配置的 short_id"
             "   fix-caddyfile                                   修复 Caddyfile"
             "   fix-config.json                                 修复 config.json\n"
             "管理:"

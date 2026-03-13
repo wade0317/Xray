@@ -18,16 +18,6 @@
         ],
         "rules": [
             {
-                "clash_mode": "Direct",
-                "action": "route",
-                "server": "local"
-            },
-            {
-                "clash_mode": "Global",
-                "action": "route",
-                "server": "fake-ip"
-            },
-            {
                 "domain_suffix": [
                     "qq.com",
                     "tencent.com",
@@ -41,11 +31,23 @@
                     "feishu.cn",
                     "feishucdn.com",
                     "feishupay.com",
-                    "byteimg.com",
-                    "bytedance.com"
+                    "gtimg.cn",
+                    "url.cn"
                 ],
                 "action": "route",
+                "server": "local",
+                "disable_cache": true,
+                "strategy": "prefer_ipv4"
+            },
+            {
+                "clash_mode": "Direct",
+                "action": "route",
                 "server": "local"
+            },
+            {
+                "clash_mode": "Global",
+                "action": "route",
+                "server": "fake-ip"
             },
             {
                 "domain_suffix": [
@@ -68,7 +70,6 @@
         ],
         "final": "local",
         "strategy": "prefer_ipv4",
-        "independent_cache": true,
         "cache_capacity": 1024,
         "fakeip": {
             "enabled": true,
@@ -80,7 +81,6 @@
         {
             "type": "tun",
             "tag": "tun-in",
-            "interface_name": "utun8",
             "auto_route": true,
             "strict_route": true,
             "stack": "mixed",
@@ -91,7 +91,6 @@
             ],
             "sniff": true,
             "sniff_timeout": "300ms",
-            "endpoint_independent_nat": true,
             "udp_timeout": "5m",
             "platform": {
                 "http_proxy": {
@@ -205,6 +204,26 @@
                 "action": "hijack-dns"
             },
             {
+                "domain_suffix": [
+                    "qq.com",
+                    "tencent.com",
+                    "weixin.com",
+                    "wechat.com",
+                    "tenpay.com",
+                    "qpic.cn",
+                    "qlogo.cn",
+                    "wechatpay.com",
+                    "servicewechat.com",
+                    "feishu.cn",
+                    "feishucdn.com",
+                    "feishupay.com",
+                    "gtimg.cn",
+                    "url.cn"
+                ],
+                "action": "route",
+                "outbound": "direct"
+            },
+            {
                 "clash_mode": "Direct",
                 "action": "route",
                 "outbound": "direct"
@@ -224,21 +243,7 @@
             {
                 "domain_suffix": [
                     "cn",
-                    "gitee.com",
-                    "qq.com",
-                    "tencent.com",
-                    "weixin.com",
-                    "wechat.com",
-                    "tenpay.com",
-                    "qpic.cn",
-                    "qlogo.cn",
-                    "wechatpay.com",
-                    "servicewechat.com",
-                    "feishu.cn",
-                    "feishucdn.com",
-                    "feishupay.com",
-                    "byteimg.com",
-                    "bytedance.com"
+                    "gitee.com"
                 ],
                 "action": "route",
                 "outbound": "direct"

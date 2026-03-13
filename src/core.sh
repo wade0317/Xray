@@ -69,6 +69,7 @@ info_list=(
     "SNI (serverName)"
     "指纹 (Fingerprint)"
     "公钥 (Public key)"
+    "Short ID"
     "用户名 (Username)"
 )
 change_list=(
@@ -128,6 +129,11 @@ pause() {
 
 get_uuid() {
     tmp_uuid=$(cat /proc/sys/kernel/random/uuid)
+}
+
+get_short_id() {
+    [[ ! $tmp_uuid ]] && get_uuid
+    is_short_id=$(echo "$tmp_uuid" | tr -d '-' | cut -c1-8)
 }
 
 get_ip() {
@@ -888,7 +894,7 @@ api() {
 # add a config
 add() {
     # 清空上次 add 调用残留的变量，防止多次连续调用时配置污染
-    unset json_str is_stream is_protocol is_reality is_servername is_public_key is_private_key
+    unset json_str is_stream is_protocol is_reality is_servername is_public_key is_private_key is_short_id
     is_lower=${1,,}
     if [[ $is_lower ]]; then
         case $is_lower in
@@ -1227,8 +1233,8 @@ get() {
             [[ $? != 0 ]] && err "无法读取此文件: $is_config_file"
             is_json_data_more=$(jq '.inbounds[0]|.streamSettings|.network,.tcpSettings.header.type,(.kcpSettings|.seed,.header.type),.quicSettings.header.type,.wsSettings.path,.httpSettings.path,.grpcSettings.serviceName,.xhttpSettings.path,.finalmask.type,.finalmask.settings.password' <<<$is_json_str)
             is_json_data_host=$(jq '.inbounds[0]|.streamSettings|.grpc_host,.wsSettings.headers.Host,.httpSettings.host[0],.xhttpSettings.host' <<<$is_json_str)
-            is_json_data_reality=$(jq '.inbounds[0]|.streamSettings|.security,(.realitySettings|.serverNames[0],.publicKey,.privateKey)' <<<$is_json_str)
-            is_up_var_set=(null is_protocol port uuid trojan_password ss_method ss_password door_addr door_port is_dynamic_port is_socks_user is_socks_pass net tcp_type kcp_seed kcp_type quic_type ws_path h2_path grpc_path xhttp_path fmask_type fmask_pass grpc_host ws_host h2_host xhttp_host is_reality is_servername is_public_key is_private_key)
+            is_json_data_reality=$(jq '.inbounds[0]|.streamSettings|.security,(.realitySettings|.serverNames[0],.publicKey,.privateKey,((.shortIds[0] // .shortId) // ""))' <<<$is_json_str)
+            is_up_var_set=(null is_protocol port uuid trojan_password ss_method ss_password door_addr door_port is_dynamic_port is_socks_user is_socks_pass net tcp_type kcp_seed kcp_type quic_type ws_path h2_path grpc_path xhttp_path fmask_type fmask_pass grpc_host ws_host h2_host xhttp_host is_reality is_servername is_public_key is_private_key is_short_id)
             [[ $is_debug ]] && msg "\n------------- debug: $is_config_file -------------"
             i=0
             for v in $(sed 's/""/null/g;s/"//g' <<<"$is_json_data_base $is_json_data_more $is_json_data_host $is_json_data_reality"); do
@@ -1353,9 +1359,10 @@ get() {
             if [[ $is_reality ]]; then
                 [[ ! $is_servername ]] && is_servername=$is_random_servername
                 [[ ! $is_private_key ]] && get_pbk
-                is_stream='security:"reality",realitySettings:{dest:"'${is_servername}\:443'",serverNames:["'${is_servername}'",""],publicKey:"'$is_public_key'",privateKey:"'$is_private_key'",shortIds:[""]}'
+                [[ ! $is_short_id ]] && get_short_id
+                is_stream='security:"reality",realitySettings:{dest:"'${is_servername}\:443'",serverNames:["'${is_servername}'",""],publicKey:"'$is_public_key'",privateKey:"'$is_private_key'",shortIds:["'$is_short_id'"]}'
                 if [[ $is_client ]]; then
-                    is_stream='security:"reality",realitySettings:{serverName:"'${is_servername}'",fingerprint:"chrome",publicKey:"'$is_public_key'",shortId:"",spiderX:"/"}'
+                    is_stream='security:"reality",realitySettings:{serverName:"'${is_servername}'",fingerprint:"chrome",publicKey:"'$is_public_key'",shortId:"'$is_short_id'",spiderX:"/"}'
                 fi
             fi
             ;;
@@ -1558,9 +1565,9 @@ info() {
         if [[ $is_reality ]]; then
             is_color=41
             is_can_change=(0 1 5 10 11)
-            is_info_show=(0 1 2 3 15 8 16 17 18)
-            is_info_str=($is_protocol $is_addr $port $uuid xtls-rprx-vision reality $is_servername "chrome" $is_public_key)
-            is_url="$is_protocol://$uuid@$is_addr:$port?encryption=none&security=reality&flow=xtls-rprx-vision&type=tcp&sni=$is_servername&pbk=$is_public_key&fp=chrome#xray-$net-$is_addr"
+            is_info_show=(0 1 2 3 15 8 16 17 18 19)
+            is_info_str=($is_protocol $is_addr $port $uuid xtls-rprx-vision reality $is_servername "chrome" $is_public_key $is_short_id)
+            is_url="$is_protocol://$uuid@$is_addr:$port?encryption=none&security=reality&flow=xtls-rprx-vision&type=tcp&sni=$is_servername&pbk=$is_public_key&fp=chrome&sid=$is_short_id#xray-$net-$is_addr"
         fi
         ;;
     ss)
@@ -1599,7 +1606,7 @@ info() {
         ;;
     socks)
         is_can_change=(0 1 15 4)
-        is_info_show=(0 1 2 19 10)
+        is_info_show=(0 1 2 20 10)
         is_info_str=($is_protocol $is_addr $port $is_socks_user $is_socks_pass)
         is_url="socks://$(echo -n ${is_socks_user}:${is_socks_pass} | base64 -w 0)@${is_addr}:${port}#xray-$net-${is_addr}"
         ;;
@@ -1648,6 +1655,42 @@ footer_msg() {
     [[ $is_caddy_stop && $host ]] && warn "Caddy 当前处于停止状态."
     msg "------------- END -------------"
     msg "问题反馈: $(msg_ul https://github.com/$is_sh_repo/issues)\n"
+}
+
+fix_reality_short_id() {
+    local target="$1"
+    local fixed=0
+    local found=0
+
+    [[ ! -d $is_conf_dir ]] && return
+    is_dont_auto_exit=1
+
+    for v in $(ls "$is_conf_dir" 2>/dev/null | grep '\.json$' | sed '/dynamic-port-.*-link/d'); do
+        [[ $target && $v != "$target" ]] && continue
+        found=1
+        unset is_protocol port uuid host net path trojan_password ss_method \
+              ss_password is_socks_user is_socks_pass is_reality is_servername \
+              is_public_key is_private_key is_short_id is_https_port is_addr \
+              is_config_file is_dynamic_port header_type kcp_seed is_trojan \
+              is_no_auto_tls
+        get info "$v"
+        [[ ! $is_reality || $is_short_id ]] && continue
+        msg "fix-short-id: $v"
+        change "$v" full
+        fixed=1
+    done
+
+    is_dont_auto_exit=
+
+    [[ $target && $found -eq 0 ]] && err "无法找到配置: $target"
+    if [[ $fixed -eq 1 ]]; then
+        [[ $is_api_fail ]] && manage restart &
+        load subscribe.sh
+        gen_subscribe
+        _green "\nReality short_id 修复完成.\n"
+    else
+        msg "\n没有需要修复的 Reality short_id.\n"
+    fi
 }
 
 # URL or qrcode
@@ -1900,6 +1943,12 @@ main() {
         else
             err "无法执行此操作"
         fi
+        ;;
+    fix-short-id)
+        fix_reality_short_id "$2"
+        ;;
+    fix-short-id-all)
+        fix_reality_short_id
         ;;
     i | info)
         info $2

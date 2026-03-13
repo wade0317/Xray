@@ -44,11 +44,11 @@ dns:
     - "*.qlogo.cn"
     - "*.wechatpay.com"
     - "*.servicewechat.com"
+    - "*.gtimg.cn"
+    - "*.url.cn"
     - "*.feishu.cn"
     - "*.feishucdn.com"
     - "*.feishupay.com"
-    - "*.byteimg.com"
-    - "*.bytedance.com"
   # 默认 DNS（用于国内域名直连解析）
   nameserver:
     - 223.5.5.5
@@ -168,11 +168,11 @@ rules:
   - DOMAIN-SUFFIX,qlogo.cn,DIRECT
   - DOMAIN-SUFFIX,wechatpay.com,DIRECT
   - DOMAIN-SUFFIX,servicewechat.com,DIRECT
+  - DOMAIN-SUFFIX,gtimg.cn,DIRECT
+  - DOMAIN-SUFFIX,url.cn,DIRECT
   - DOMAIN-SUFFIX,feishu.cn,DIRECT
   - DOMAIN-SUFFIX,feishucdn.com,DIRECT
   - DOMAIN-SUFFIX,feishupay.com,DIRECT
-  - DOMAIN-SUFFIX,byteimg.com,DIRECT
-  - DOMAIN-SUFFIX,bytedance.com,DIRECT
 
   # 国内域名直连
   - RULE-SET,geosite-cn,DIRECT
