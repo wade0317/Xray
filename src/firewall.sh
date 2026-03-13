@@ -175,7 +175,7 @@ fw_del_port() {
 # add 后调用：根据协议类型开放对应端口
 fw_allow_new() {
     [[ $is_gen || $is_no_auto_tls ]] && return
-    if [[ $host ]]; then
+    if [[ $host && ! $is_no_auto_tls ]]; then
         # TLS 协议由 Caddy 转发，开放 Caddy 监听的 HTTPS 端口
         fw_add_port $is_https_port tcp
     else
@@ -190,14 +190,14 @@ fw_allow_new() {
 # 注意：需在配置文件已删除后调用，以便准确统计剩余使用情况
 fw_revoke_unused() {
     [[ ! $is_config_file ]] && return
-    if [[ $host ]]; then
+    if [[ $host && ! $is_no_auto_tls ]]; then
         # TLS 协议：检查是否还有其他 Caddy 站点配置
         local remaining
         remaining=$(ls "$is_caddy_conf"/*.conf 2>/dev/null | wc -l)
         [[ $remaining -gt 0 ]] && return
         fw_del_port $is_https_port tcp
     else
-        # 直连协议：检查剩余配置是否还在使用该端口
+        # 直连协议或 no-auto-tls：检查剩余配置是否还在使用该端口
         local used=0
         for f in "$is_conf_dir"/*.json; do
             [[ -f $f ]] || continue
@@ -218,7 +218,8 @@ fw_sync_after_ddel() {
     fw=$(_fw_type)
     [[ ! $fw ]] && return
 
-    # 收集剩余配置中所有直连端口（无 host 的配置，listen 0.0.0.0）
+    # 收集剩余配置中所有需要防火墙管理的直连端口
+    # 仅统计 listen 0.0.0.0 的节点，no-auto-tls 监听 127.0.0.1，不纳入防火墙管理
     local active_ports=()
     for f in "$is_conf_dir"/*.json; do
         [[ -f $f ]] || continue
