@@ -361,10 +361,13 @@ _gen_singbox_config() {
            {"type":"direct","tag":"direct"},
            {"type":"urltest","tag":"auto",
             "outbounds": $tag_arr,
-            "interval": "3m",
-            "tolerance": 50},
+            "url": "https://www.gstatic.com/generate_204",
+            "interval": "1m",
+            "tolerance": 100,
+            "idle_timeout": "10m",
+            "interrupt_exist_connections": false},
            {"type":"selector","tag":"proxy",
-            "outbounds": (["auto"] + $tag_arr),
+            "outbounds": (["auto"] + $tag_arr + ["direct"]),
             "default": "auto"}
        ] + $nodes |
        ($nodes | map(.server // empty) | unique) as $servers |
