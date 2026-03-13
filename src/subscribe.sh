@@ -348,11 +348,31 @@ _gen_singbox_config() {
            {"type":"selector","tag":"proxy",
             "outbounds": $tag_arr,
             "default": $default_tag}
-       ] + $nodes' \
+       ] + $nodes |
+       ($nodes | map(.server // empty) | unique) as $servers |
+       ($servers | map(select(test("^([0-9]{1,3}\\.){3}[0-9]{1,3}$") or test("^[0-9a-fA-F:]+:[0-9a-fA-F:]+$") | not))) as $server_domains |
+       ($servers | map(select(test("^([0-9]{1,3}\\.){3}[0-9]{1,3}$")) | . + "/32")) as $server_ips_v4 |
+       ($servers | map(select(test("^[0-9a-fA-F:]+:[0-9a-fA-F:]+$")) | . + "/128")) as $server_ips_v6 |
+       ($server_ips_v4 + $server_ips_v6) as $server_ips |
+       (if ($server_domains | length) > 0 then
+           .dns.rules = [{"domain": $server_domains, "action": "route", "server": "local"}] + .dns.rules
+       else . end) |
+       .route.rules = (
+           (if ($server_domains | length) > 0 and ($server_ips | length) > 0 then
+               [{"domain": $server_domains, "ip_cidr": $server_ips, "action": "route", "outbound": "direct"}]
+           elif ($server_domains | length) > 0 then
+               [{"domain": $server_domains, "action": "route", "outbound": "direct"}]
+           elif ($server_ips | length) > 0 then
+               [{"ip_cidr": $server_ips, "action": "route", "outbound": "direct"}]
+           else
+               []
+           end) + .route.rules
+       )' \
        "$is_tmpl_dir/sing-box-vpn.json"
 }
 
 # 基于 clash 模板生成完整配置（替换 proxies + proxy-groups）
+# 注：Clash 引擎内置 proxy bypass + proxy-server-nameserver 机制，无需手动注入节点直连规则
 _gen_mihomo_config() {
     local proxies="$1"
     local names="$2"   # "      - \"tag\"\n" 格式

@@ -35,6 +35,20 @@ dns:
     - "*.local"
     - "*.localhost"
     - localhost.ptlogin2.qq.com
+    - "*.qq.com"
+    - "*.tencent.com"
+    - "*.weixin.com"
+    - "*.wechat.com"
+    - "*.tenpay.com"
+    - "*.qpic.cn"
+    - "*.qlogo.cn"
+    - "*.wechatpay.com"
+    - "*.servicewechat.com"
+    - "*.feishu.cn"
+    - "*.feishucdn.com"
+    - "*.feishupay.com"
+    - "*.byteimg.com"
+    - "*.bytedance.com"
   # 默认 DNS（用于国内域名直连解析）
   nameserver:
     - 223.5.5.5
@@ -143,6 +157,22 @@ rules:
 
   # gitee 直连
   - DOMAIN-SUFFIX,gitee.com,DIRECT
+
+  # 微信/腾讯/飞书直连（保障国内应用不走代理）
+  - DOMAIN-SUFFIX,qq.com,DIRECT
+  - DOMAIN-SUFFIX,tencent.com,DIRECT
+  - DOMAIN-SUFFIX,weixin.com,DIRECT
+  - DOMAIN-SUFFIX,wechat.com,DIRECT
+  - DOMAIN-SUFFIX,tenpay.com,DIRECT
+  - DOMAIN-SUFFIX,qpic.cn,DIRECT
+  - DOMAIN-SUFFIX,qlogo.cn,DIRECT
+  - DOMAIN-SUFFIX,wechatpay.com,DIRECT
+  - DOMAIN-SUFFIX,servicewechat.com,DIRECT
+  - DOMAIN-SUFFIX,feishu.cn,DIRECT
+  - DOMAIN-SUFFIX,feishucdn.com,DIRECT
+  - DOMAIN-SUFFIX,feishupay.com,DIRECT
+  - DOMAIN-SUFFIX,byteimg.com,DIRECT
+  - DOMAIN-SUFFIX,bytedance.com,DIRECT
 
   # 国内域名直连
   - RULE-SET,geosite-cn,DIRECT
