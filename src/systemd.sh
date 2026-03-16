@@ -7,14 +7,17 @@ install_service() {
 [Unit]
 Description=$is_core_name Service
 Documentation=$is_doc_site
-After=network.target nss-lookup.target
+Wants=network-online.target
+After=network-online.target nss-lookup.target
+StartLimitIntervalSec=0
 
 [Service]
 #User=nobody
 User=root
 NoNewPrivileges=true
 ExecStart=$is_core_bin run -config $is_config_json -confdir $is_conf_dir
-Restart=on-failure
+Restart=always
+RestartSec=5s
 RestartPreventExitStatus=23
 LimitNPROC=10000
 LimitNOFILE=1048576
@@ -32,8 +35,9 @@ WantedBy=multi-user.target"
 [Unit]
 Description=Caddy
 Documentation=https://caddyserver.com/docs/
-After=network.target network-online.target
-Requires=network-online.target
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=0
 
 [Service]
 Type=notify
@@ -41,6 +45,8 @@ User=root
 Group=root
 ExecStart=$is_caddy_bin run --environ --config $is_caddyfile --adapter caddyfile
 ExecReload=$is_caddy_bin reload --config $is_caddyfile --adapter caddyfile
+Restart=always
+RestartSec=5s
 TimeoutStopSec=5s
 LimitNPROC=10000
 LimitNOFILE=1048576
@@ -54,6 +60,21 @@ WantedBy=multi-user.target"
     esac
 
     # enable, reload
-    systemctl enable $1
     systemctl daemon-reload
+    systemctl enable $1
+}
+
+install_logrotate() {
+    cat >/etc/logrotate.d/$is_core <<EOF
+$is_log_dir/*.log {
+    daily
+    rotate 7
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+    create 0640 root root
+}
+EOF
 }

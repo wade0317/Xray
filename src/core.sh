@@ -790,7 +790,7 @@ uninstall() {
     fi
     manage stop &>/dev/null
     manage disable &>/dev/null
-    rm -rf $is_core_dir $is_log_dir $is_sh_bin /lib/systemd/system/$is_core.service
+    rm -rf $is_core_dir $is_log_dir $is_sh_bin /lib/systemd/system/$is_core.service /etc/logrotate.d/$is_core
     sed -i "/$is_core/d" /root/.bashrc
     # uninstall caddy; 2 is ask result
     if [[ $REPLY == '2' ]]; then
@@ -798,6 +798,7 @@ uninstall() {
         manage disable caddy &>/dev/null
         rm -rf $is_caddy_dir $is_caddy_bin /lib/systemd/system/caddy.service
     fi
+    systemctl daemon-reload &>/dev/null
     [[ $is_install_sh ]] && return # reinstall
     _green "\n卸载完成!"
     msg "脚本哪里需要完善? 请反馈"

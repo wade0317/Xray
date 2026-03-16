@@ -47,6 +47,16 @@ warn() {
     echo -e "\n$is_warn $@\n"
 }
 
+restart_service_checked() {
+    local service_name=$1
+    local service_label=$2
+    (
+        if ! systemctl restart "$service_name" &>/dev/null; then
+            warn "${service_label} 自动重启失败，请检查: systemctl status ${service_name}"
+        fi
+    ) &
+}
+
 # load bash script.
 load() {
     . $is_sh_dir/src/$1
@@ -101,6 +111,7 @@ is_sub_token_file=$is_sub_dir/token
 is_sub_port=2096
 is_sub_caddy_conf=$is_caddy_dir/sites/subscribe.conf
 is_tmpl_dir=$is_sh_dir/template
+is_service_ver_file=$is_core_dir/.service_ver
 
 # core ver
 is_core_ver=$($is_core_bin version | head -n1 | cut -d " " -f1-2)
@@ -112,24 +123,34 @@ else
     is_core_stop=1
 fi
 if [[ -f $is_caddy_bin && -d $is_caddy_dir && $is_caddy_service ]]; then
-    is_caddy=1
-    # fix caddy run; ver >= 2.8.2
-    [[ ! $(grep '\-\-adapter caddyfile' /lib/systemd/system/caddy.service) ]] && {
-        load systemd.sh
-        install_service caddy
-        systemctl restart caddy &
-    }
-    is_caddy_ver=$($is_caddy_bin version | head -n1 | cut -d " " -f1)
-    is_tmp_http_port=$(grep -E '^ {2,}http_port|^http_port' $is_caddyfile | grep -E -o [0-9]+)
-    is_tmp_https_port=$(grep -E '^ {2,}https_port|^https_port' $is_caddyfile | grep -E -o [0-9]+)
-    [[ $is_tmp_http_port ]] && is_http_port=$is_tmp_http_port
-    [[ $is_tmp_https_port ]] && is_https_port=$is_tmp_https_port
     if [[ $(pgrep -f $is_caddy_bin) ]]; then
         is_caddy_status=$(_green running)
     else
         is_caddy_status=$(_red_bg stopped)
         is_caddy_stop=1
     fi
+fi
+
+if [[ "$(cat "$is_service_ver_file" 2>/dev/null)" != "$is_sh_ver" ]]; then
+    load systemd.sh
+    [[ -f /lib/systemd/system/$is_core.service ]] && {
+        install_service $is_core
+        [[ ! $is_core_stop ]] && restart_service_checked "$is_core" "$is_core_name"
+    }
+    install_logrotate
+    if [[ -f $is_caddy_bin && -d $is_caddy_dir && $is_caddy_service ]]; then
+        install_service caddy
+        [[ ! $is_caddy_stop ]] && restart_service_checked caddy Caddy
+    fi
+    echo "$is_sh_ver" >"$is_service_ver_file"
+fi
+if [[ -f $is_caddy_bin && -d $is_caddy_dir && $is_caddy_service ]]; then
+    is_caddy=1
+    is_caddy_ver=$($is_caddy_bin version | head -n1 | cut -d " " -f1)
+    is_tmp_http_port=$(grep -E '^ {2,}http_port|^http_port' $is_caddyfile | grep -E -o [0-9]+)
+    is_tmp_https_port=$(grep -E '^ {2,}https_port|^https_port' $is_caddyfile | grep -E -o [0-9]+)
+    [[ $is_tmp_http_port ]] && is_http_port=$is_tmp_http_port
+    [[ $is_tmp_https_port ]] && is_https_port=$is_tmp_https_port
 fi
 
 [[ -f $is_sub_token_file ]] && is_sub_token=$(cat $is_sub_token_file)

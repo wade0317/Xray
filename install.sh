@@ -1,7 +1,7 @@
 #!/bin/bash
 
 author=wade0317
-is_sh_ver=v1.30.1
+is_sh_ver=v1.4.0
 # github=https://github.com/wade0317/xray
 
 # bash fonts colors
@@ -89,6 +89,7 @@ is_caddyfile=$is_caddy_dir/Caddyfile
 is_caddy_conf=$is_caddy_dir/$author
 is_http_port=80
 is_https_port=443
+is_service_ver_file=$is_core_dir/.service_ver
 tmp_var_lists=(
     tmpcore
     tmpsh
@@ -444,6 +445,8 @@ main() {
     load systemd.sh
     is_new_install=1
     install_service $is_core &>/dev/null
+    install_logrotate
+    echo "$is_sh_ver" >$is_service_ver_file
 
     # create condf dir
     mkdir -p $is_conf_dir
