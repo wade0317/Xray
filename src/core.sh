@@ -1361,7 +1361,7 @@ get() {
                 [[ ! $is_servername ]] && is_servername=$is_random_servername
                 [[ ! $is_private_key ]] && get_pbk
                 [[ ! $is_short_id ]] && get_short_id
-                is_stream='security:"reality",realitySettings:{dest:"'${is_servername}\:443'",serverNames:["'${is_servername}'",""],publicKey:"'$is_public_key'",privateKey:"'$is_private_key'",shortIds:["'$is_short_id'"]}'
+                is_stream='security:"reality",realitySettings:{dest:"'${is_servername}\:443'",serverNames:["'${is_servername}'"],privateKey:"'$is_private_key'",shortIds:["'$is_short_id'"]}'
                 if [[ $is_client ]]; then
                     is_stream='security:"reality",realitySettings:{serverName:"'${is_servername}'",fingerprint:"chrome",publicKey:"'$is_public_key'",shortId:"'$is_short_id'",spiderX:"/"}'
                 fi
@@ -1662,6 +1662,9 @@ fix_reality_short_id() {
     local target="$1"
     local fixed=0
     local found=0
+    local config_path=""
+    local current_sid=""
+    local current_security=""
 
     [[ ! -d $is_conf_dir ]] && return
     is_dont_auto_exit=1
@@ -1669,13 +1672,10 @@ fix_reality_short_id() {
     for v in $(ls "$is_conf_dir" 2>/dev/null | grep '\.json$' | sed '/dynamic-port-.*-link/d'); do
         [[ $target && $v != "$target" ]] && continue
         found=1
-        unset is_protocol port uuid host net path trojan_password ss_method \
-              ss_password is_socks_user is_socks_pass is_reality is_servername \
-              is_public_key is_private_key is_short_id is_https_port is_addr \
-              is_config_file is_dynamic_port header_type kcp_seed is_trojan \
-              is_no_auto_tls
-        get info "$v"
-        [[ ! $is_reality || $is_short_id ]] && continue
+        config_path="$is_conf_dir/$v"
+        current_security=$(jq -r '.inbounds[0].streamSettings.security // ""' "$config_path" 2>/dev/null)
+        current_sid=$(jq -r '.inbounds[0].streamSettings.realitySettings | (.shortIds[0] // .shortId // "")' "$config_path" 2>/dev/null)
+        [[ $current_security != 'reality' || $current_sid ]] && continue
         msg "fix-short-id: $v"
         change "$v" full
         fixed=1
