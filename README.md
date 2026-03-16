@@ -44,29 +44,25 @@
 
 ## 安装
 
-> 如果已安装过脚本，无需重新安装，直接执行以下命令更新到最新版本（节点配置保留不变）：
-> ```bash
-> xray update sh
-> ```
+### 首次安装
+
+#### 通过一键脚本安装
 
 ```bash
 bash <(wget -qO- https://raw.githubusercontent.com/wade0317/Xray/main/install.sh)
 ```
 
-如果服务器无法访问 GitHub，可先克隆代码到本机后上传安装：
-
-```bash
-# 1. 在本机克隆代码
-git clone https://github.com/wade0317/Xray.git
-
-# 2. 上传到服务器并安装
-scp -r Xray root@your-server:/root/
-ssh root@your-server "cd /root/Xray && bash install.sh"
-```
-
 安装完成后默认添加一个 **VLESS-REALITY** 配置，并自动：
 - 开放对应防火墙端口（如 ufw/firewalld 已启用）
 - 生成订阅文件并输出订阅链接
+
+### 更新脚本
+
+如果已安装过脚本，无需重新安装，直接执行以下命令更新到最新版本（节点配置保留不变）：
+
+```bash
+xray update sh
+```
 
 ## 效果预览
 
@@ -80,7 +76,56 @@ ssh root@your-server "cd /root/Xray && bash install.sh"
 xray [command] [args]
 ```
 
-### 常用操作
+直接运行 `xray` 会进入交互式管理菜单：
+
+```bash
+xray
+```
+
+带参数运行时则直接执行对应命令，例如 `xray add reality`、`xray info`。
+
+交互式主菜单如下：
+
+```text
+1. 添加配置
+2. 更改配置
+3. 查看配置
+4. 删除配置
+5. 运行管理
+6. 更新
+7. 卸载
+8. 帮助
+9. 其他
+10. 关于
+```
+
+部分菜单还会继续进入子菜单，例如：
+
+```text
+查看配置:
+1. 查看配置
+2. 更新订阅配置
+
+运行管理:
+1. 启动
+2. 停止
+3. 重启
+
+更新:
+1. 更新 Xray-core
+2. 更新脚本
+3. 更新 Caddy
+
+其他:
+1. 启用 BBR
+2. 查看日志
+3. 查看错误日志
+4. 测试运行
+5. 重装脚本
+6. 设置 DNS
+```
+
+### 命令行直接运行操作
 
 ```bash
 # 添加节点（交互式选择协议）
