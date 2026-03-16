@@ -359,16 +359,9 @@ _gen_singbox_config() {
        --arg default_tag "$first_tag" \
        '.outbounds = [
            {"type":"direct","tag":"direct"},
-           {"type":"urltest","tag":"auto",
-            "outbounds": $tag_arr,
-            "url": "https://www.gstatic.com/generate_204",
-            "interval": "1m",
-            "tolerance": 100,
-            "idle_timeout": "10m",
-            "interrupt_exist_connections": false},
            {"type":"selector","tag":"proxy",
-            "outbounds": (["auto"] + $tag_arr + ["direct"]),
-            "default": "auto"}
+            "outbounds": ($tag_arr + ["direct"]),
+            "default": $default_tag}
        ] + $nodes |
        ($nodes | map(.server // empty) | unique) as $servers |
        ($servers | map(select(test("^([0-9]{1,3}\\.){3}[0-9]{1,3}$") or test("^[0-9a-fA-F:]+:[0-9a-fA-F:]+$") | not))) as $server_domains |

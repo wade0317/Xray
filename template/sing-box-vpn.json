@@ -67,7 +67,7 @@
                 "server": "fake-ip"
             }
         ],
-        "final": "local",
+        "final": "fake-ip",
         "strategy": "prefer_ipv4",
         "cache_capacity": 1024,
         "fakeip": {
