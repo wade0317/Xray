@@ -67,7 +67,7 @@
                 "server": "fake-ip"
             }
         ],
-        "final": "fake-ip",
+        "final": "google",
         "strategy": "prefer_ipv4",
         "cache_capacity": 1024,
         "fakeip": {
