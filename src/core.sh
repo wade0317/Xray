@@ -660,7 +660,7 @@ change() {
             if [[ $? != 0 ]]; then
                 err "Private key 无法通过测试."
             fi
-            is_private_key=$is_new_public_key
+            is_public_key=$is_new_public_key
             # create server $is_protocol-$net | $is_core_bin -test &>/dev/null
             create server $is_protocol-$net
             $is_core_bin -test <<<"$is_new_json" &>/dev/null
@@ -1361,7 +1361,7 @@ get() {
                 [[ ! $is_servername ]] && is_servername=$is_random_servername
                 [[ ! $is_private_key ]] && get_pbk
                 [[ ! $is_short_id ]] && get_short_id
-                is_stream='security:"reality",realitySettings:{dest:"'${is_servername}\:443'",serverNames:["'${is_servername}'"],privateKey:"'$is_private_key'",shortIds:["'$is_short_id'"]}'
+                is_stream='security:"reality",realitySettings:{dest:"'${is_servername}\:443'",serverNames:["'${is_servername}'"],publicKey:"'$is_public_key'",privateKey:"'$is_private_key'",shortIds:["'$is_short_id'"]}'
                 if [[ $is_client ]]; then
                     is_stream='security:"reality",realitySettings:{serverName:"'${is_servername}'",fingerprint:"chrome",publicKey:"'$is_public_key'",shortId:"'$is_short_id'",spiderX:"/"}'
                 fi
