@@ -342,7 +342,11 @@ EOF
     esac
 }
 
-# 基于 sing-box 模板生成完整配置（替换 outbounds）
+# 基于 sing-box 1.11.x 模板生成完整配置（替换 outbounds）
+# 说明：
+# 1. 这里故意沿用 1.11.x 可用的 Legacy DNS server 格式；
+# 2. 代理服务器域名解析依赖模板中的 dns.rules[outbound=any]；
+# 3. 这里只额外注入节点直连路由规则，避免代理服务器地址回流到代理形成路由环。
 _gen_singbox_config() {
     local outs="$1"    # JSON 数组元素，逗号分隔
     local tags="$2"    # "tag1","tag2","tag3"
@@ -368,9 +372,6 @@ _gen_singbox_config() {
        ($servers | map(select(test("^([0-9]{1,3}\\.){3}[0-9]{1,3}$")) | . + "/32")) as $server_ips_v4 |
        ($servers | map(select(test("^[0-9a-fA-F:]+:[0-9a-fA-F:]+$")) | . + "/128")) as $server_ips_v6 |
        ($server_ips_v4 + $server_ips_v6) as $server_ips |
-       (if ($server_domains | length) > 0 then
-           .dns.rules = [{"domain": $server_domains, "action": "route", "server": "local"}] + .dns.rules
-       else . end) |
        .route.rules = (
            (if ($server_domains | length) > 0 and ($server_ips | length) > 0 then
                [{"domain": $server_domains, "ip_cidr": $server_ips, "action": "route", "outbound": "direct"}]

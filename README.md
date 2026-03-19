@@ -240,7 +240,7 @@ xray sub
 
 ```
 /etc/xray/sh/template/
-├── sing-box-vpn.json   # Sing-box 客户端模板
+├── sing-box-vpn.json   # Sing-box 1.11.x 客户端模板（Legacy DNS 格式）
 └── clash-vpn.yaml      # Mihomo/Clash 客户端模板
 ```
 

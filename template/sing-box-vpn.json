@@ -18,6 +18,11 @@
         ],
         "rules": [
             {
+                "outbound": "any",
+                "action": "route",
+                "server": "local"
+            },
+            {
                 "domain_suffix": [
                     "qq.com",
                     "tencent.com",
@@ -35,8 +40,7 @@
                     "url.cn"
                 ],
                 "action": "route",
-                "server": "local",
-                "disable_cache": true
+                "server": "local"
             },
             {
                 "clash_mode": "Direct",
@@ -62,7 +66,10 @@
                 "server": "local"
             },
             {
-                "rule_set": "geosite-geolocation-!cn",
+                "query_type": [
+                    "A",
+                    "AAAA"
+                ],
                 "action": "route",
                 "server": "fake-ip"
             }
