@@ -48,12 +48,14 @@
 
 > **系统要求**：推荐使用 **Ubuntu**（已在 Ubuntu 系统上完整测试验证）。需要 **root 权限**，非 root 用户请先执行 `sudo -i` 切换到 root 用户。
 
-#### 通过一键脚本安装
 
+#### 非root 用户先切换到 root
 ```bash
-# 非 root 用户先切换到 root
 sudo -i
+```
 
+#### 通过一键脚本安装
+```bash
 # 执行安装
 bash <(wget -qO- https://raw.githubusercontent.com/wade0317/Xray/main/install.sh)
 ```
