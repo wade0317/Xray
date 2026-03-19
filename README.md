@@ -56,7 +56,6 @@ sudo -i
 
 #### 通过一键脚本安装
 ```bash
-# 执行安装
 bash <(wget -qO- https://raw.githubusercontent.com/wade0317/Xray/main/install.sh)
 ```
 
