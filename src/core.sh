@@ -417,18 +417,13 @@ create() {
         get_port
         is_log='log:{access:"/var/log/'"$is_core"'/access.log",error:"/var/log/'"$is_core"'/error.log",loglevel:"warning"}'
         is_dns='dns:{}'
-        is_api='api:{tag:"api",services:["HandlerService","LoggerService","StatsService"]}'
-        is_stats='stats:{}'
-        is_policy_system='system:{statsInboundUplink:true,statsInboundDownlink:true,statsOutboundUplink:true,statsOutboundDownlink:true}'
-        is_policy='policy:{levels:{"0":{handshake:'"$((${tmp_port:0:1} + 1))"',connIdle:'"${tmp_port:0:3}"',uplinkOnly:'"$((${tmp_port:2:1} + 1))"',downlinkOnly:'"$((${tmp_port:3:1} + 3))"',statsUserUplink:true,statsUserDownlink:true}},'"$is_policy_system"'}'
         is_ban_ad='{type:"field",domain:["geosite:category-ads-all"],marktag:"ban_ad",outboundTag:"block"}'
         is_ban_bt='{type:"field",protocol:["bittorrent"],marktag:"ban_bt",outboundTag:"block"}'
         is_ban_cn='{type:"field",ip:["geoip:cn"],marktag:"ban_geoip_cn",outboundTag:"block"}'
         is_openai='{type:"field",domain:["geosite:openai"],marktag:"fix_openai",outboundTag:"direct"}'
-        is_routing='routing:{domainStrategy:"IPIfNonMatch",rules:[{type:"field",inboundTag:["api"],outboundTag:"api"},'"$is_ban_bt"','"$is_ban_cn"','"$is_openai"',{type:"field",ip:["geoip:private"],outboundTag:"block"}]}'
-        is_inbounds='inbounds:[{tag:"api",port:'"$tmp_port"',listen:"127.0.0.1",protocol:"dokodemo-door",settings:{address:"127.0.0.1"}}]'
+        is_routing='routing:{domainStrategy:"IPIfNonMatch",rules:['"$is_ban_bt"','"$is_ban_cn"','"$is_openai"',{type:"field",ip:["geoip:private"],outboundTag:"block"}]}'
         is_outbounds='outbounds:[{tag:"direct",protocol:"freedom"},{tag:"block",protocol:"blackhole"}]'
-        is_server_config_json=$(jq '{'"$is_log"','"$is_dns"','"$is_api"','"$is_stats"','"$is_policy"','"$is_routing"','"$is_inbounds"','"$is_outbounds"'}' <<<{})
+        is_server_config_json=$(jq '{'"$is_log"','"$is_dns"','"$is_routing"','"$is_outbounds"'}' <<<{})
         cat <<<$is_server_config_json >$is_config_json
         manage restart &
         ;;
@@ -881,8 +876,9 @@ api() {
     [[ ! $is_api_do ]] && is_api_do=$1
     [[ ! $is_api_port ]] && {
         is_api_port=$(jq '.inbounds[] | select(.tag == "api") | .port' $is_config_json)
-        [[ $? != 0 ]] && {
-            warn "读取 API 端口失败, 无法使用 API 操作."
+        [[ $? != 0 || ! $is_api_port || $is_api_port == "null" ]] && {
+            warn "当前未启用 API, 将改用重启方式使配置生效."
+            is_api_fail=1
             return
         }
     }
