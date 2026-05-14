@@ -181,7 +181,7 @@
                 "type": "remote",
                 "tag": "geosite-geolocation-cn",
                 "format": "binary",
-                "url": "https://xray.wei1shuang2quan3.workers.dev/SagerNet/sing-geosite/rule-set/geosite-geolocation-cn.srs",
+                "url": "https://sbres.fancymyth.com/SagerNet/sing-geosite/rule-set/geosite-geolocation-cn.srs",
                 "update_interval": "1d",
                 "download_detour": "direct"
             },
@@ -189,7 +189,7 @@
                 "type": "remote",
                 "tag": "geosite-geolocation-!cn",
                 "format": "binary",
-                "url": "https://xray.wei1shuang2quan3.workers.dev/SagerNet/sing-geosite/rule-set/geosite-geolocation-!cn.srs",
+                "url": "https://sbres.fancymyth.com/SagerNet/sing-geosite/rule-set/geosite-geolocation-!cn.srs",
                 "update_interval": "1d",
                 "download_detour": "direct"
             },
@@ -197,7 +197,7 @@
                 "type": "remote",
                 "tag": "geoip-cn",
                 "format": "binary",
-                "url": "https://xray.wei1shuang2quan3.workers.dev/SagerNet/sing-geoip/rule-set/geoip-cn.srs",
+                "url": "https://sbres.fancymyth.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs",
                 "update_interval": "1d",
                 "download_detour": "direct"
             }
